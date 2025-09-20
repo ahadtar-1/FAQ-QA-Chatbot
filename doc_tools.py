@@ -1,5 +1,5 @@
 """
-The module comprises of the tools to upload and parse PDFs. 
+The module comprises of the tools to upload, parse, and store embeddings of PDFs. 
 """
 
 import os
@@ -10,6 +10,8 @@ import base64
 import langchain
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
+from langchain_pinecone import PineconeVectorStore
+from pinecone import Pinecone, PineconeException
 from langchain.schema import HumanMessage
 import gradio as gr
 from dotenv import load_dotenv, find_dotenv
@@ -17,6 +19,9 @@ from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv())
 openai_api_key = os.getenv("OPENAI_API_KEY")
 upstage_api_key = os.getenv("UPSTAGE_API_KEY")
+pinecone_api_key = os.getenv("PINECONE_API_KEY")
+index_name = "testfaqindex"
+embeddings = OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=openai_api_key)
 llm = ChatOpenAI(model = "gpt-4o", temperature = 0)
 
 
@@ -169,8 +174,11 @@ def get_table_description(text: str)-> str:
     ]
     )
 
-    response = llm.invoke([message])
-    return response.content
+    try:
+        response = llm.invoke([message])
+        return response.content
+    except Exception as e:
+        return None
 
 
 def extract_headings_and_tableofcontents(file_path: str)-> dict:
@@ -236,7 +244,7 @@ def extract_questions_answers(file_path: str)-> dict:
     -------
     questions_answers: dict
         The extracted questions answers
-
+    
     """
 
     
@@ -286,7 +294,10 @@ def extract_questions_answers(file_path: str)-> dict:
                         element_keys = element.keys()
                         if("base64_encoding" in element_keys):
                             table_description = get_table_description(element["base64_encoding"])
-                            answer = answer + "\n" + table_description + "\n"
+                            if(table_description == None):
+                                return "There was an error in the Open AI API. Unable to parse PDF."
+                            else:
+                                answer = answer + "\n" + table_description + "\n"
                         else:
                             answer = answer + element["content"]["text"].replace("\n", " ") + "\n"
                 if(questions_ended == True):
@@ -307,6 +318,38 @@ def extract_questions_answers(file_path: str)-> dict:
                         break
 
     return questions_answers
+
+
+def store_embeddings(question_answers: dict)-> bool:
+    """
+    Stores question-answer pairs in the Pinecone Vector Database
+
+    Parameters
+    ----------
+    question_answers: dict
+        The question answer pairs
+    
+    Returns
+    -------
+    bool
+        The state of the storing request
+
+    """
+
+
+    questions = question_answers.get("questions", [])
+    answers = question_answers.get("answers", [])
+    qa_list = []
+    for q, a in zip(questions, answers):
+        pair = f"{q}\n{a}"
+        qa_list.append(pair)
+    
+    try:
+        vectorstore = PineconeVectorStore(index_name=index_name, embedding=embeddings)
+        vectorstore.from_texts(texts=qa_list, embedding=embeddings, index_name=index_name)
+        return True
+    except Exception as e:
+        return False
 
 
 def parse_doc(file_path: str):
@@ -369,6 +412,7 @@ def upload_pdf(path: str):
     json_output_dir = "./json_parsedoutputs"
 
     os.makedirs(directory_path_to_save, exist_ok = True)
+    os.makedirs(json_output_dir, exist_ok = True)
 
     file_name = os.path.basename(path)
     file_path = os.path.join(directory_path_to_save, file_name)
@@ -382,3 +426,4 @@ def upload_pdf(path: str):
             return gr.update(value="PDF successfully processed", visible = True)
         else:           
             return gr.update(value="PDF not successfully processed. The Upstage API is not working.", visible = True)
+    
