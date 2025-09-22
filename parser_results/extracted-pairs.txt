@@ -1,0 +1,254 @@
+Q1. What is new in Windows Server 2012?
+Windows Server 2012 brings our company's experience building and operating public clouds to the server platform for private clouds. The new licensing and packaging makes it easier to manage workloads in highly virtualized public and private cloud environments. Windows Server 2012 will move to a consistent licensing model and will have common features enabling the reduction of editions. These include
+· Two editions, Standard and Datacenter. · Single licenses that cover up to two physical processors. · Editions differentiated by virtualization rights only (two for Standard; unlimited for Datacenter).
+
+Question Answer Pair Ended
+Q2. What is the difference between Windows Server 2012 Standard edition and Windows Server 2012 Datacenter edition?
+Both Standard and Datacenter editions provide the same set of features; the only thing that differentiates the editions is the number of Virtual Machines (VMs). A Standard edition license will entitle you to run up to two VMs on up to two processors (subject to the VM use rights outlined in the Product Use Rights document). A Datacenter edition license will entitle you to run an unlimited number of VMs on up to two processors.
+
+Question Answer Pair Ended
+Q3. Will Windows Server 2012 Standard edition have all of the same features as Windows Server 2012 Datacenter edition?
+Yes. All features that are available in the Datacenter edition are also available in the Standard edition, including high availability features like failover clustering. The only difference between the two editions will be virtualization rights.
+
+Question Answer Pair Ended
+Q4. Is Windows Server 2012 aligning to the System Center 2012 and Enrollment for Core Infrastructure (ECI) model?
+Yes. As part of the alignment with the Microsoft private cloud licensing model, Windows Server 2012 and System Center 2012, as well as Enrollment for Core Infrastructure (ECI), will have the same licensing and packaging structure. These include
+· Two editions, Standard and Datacenter. · Single licenses that cover up to two physical processors. · Editions differentiated by virtualization rights only (two for Standard; unlimited for Datacenter).
+Client Access Licenses (CALs) will continue to be required for access to Windows Server 2012 servers.
+
+Question Answer Pair Ended
+Q5. What are some of the features now available in Windows Server 2012 Standard that were previously only available in Windows Server 2008 R2 Enterprise and Datacenter editions?
+There are a variety of new features in Windows Server 2012 Standard edition. Here are just a few examples of what was previously only available in the premium editions:
+· Windows Server Failover Clustering · BranchCache Hosted Cache Server · Active Directory Federated Services · Additional Active Directory Certificate Services capabilities · Distributed File Services (support for more than 1 DFS root) · DFS-R Cross-File Replication
+
+Question Answer Pair Ended
+Q6. How do I determine which Windows Server 2012 edition is right for me?
+Since there is feature parity between Windows Server 2012 Standard and Datacenter editions, your decision will be based solely on your virtualization strategy as virtualization rights become the only differentiator between editions. If your strategy calls for a highly virtualized environment, Datacenter edition will provide you with optimum flexibility since it allows for unlimited virtualization. If you do not plan on a highly virtualized environment at this time, Standard edition is the right product for your needs. If you purchase Standard edition today but find that you need more capacity in the future you will have two options to expand the virtualization capacity of your licensed server:
+1. Purchase additional Standard edition licenses and assign them to the same physical server giving you the rights to run additional instances of Windows Server, or 2. If you have Software Assurance on your Standard license you can purchase a Software Assurance Step-Up and migrate to a Datacenter edition license on that server
+If you are running a highly virtualized environment, management may also be a need for you. You should consider purchasing System Center 2012 with Windows Server 2012 together in the Core Infrastructure Suite, which is available inside or outside of an Enrollment for Core Infrastructure (ECI) agreement.
+
+Question Answer Pair Ended
+Q7. If I have a Windows Server 2012 Standard edition license, how can I increase my virtualization rights?
+With the Windows Server 2012 Standard edition licensing model, you can grow your virtualization environment by either stepping up your license to Datacenter edition if you have Software Assurance, or by simply buying additional Standard edition licenses and assigning them to the same physical server. For example, if you have a 2-processor server and want to run a total of 4 VMs, you can purchase two Standard edition licenses and assign them to the same server. Additional examples are shown in the table below.
+
+A single server can host a varying number of virtual machines (VMs) depending on the number of Standard edition licenses it possesses. With one license, the server can support two VMs. Increasing the licenses to two allows for four VMs. If the server has three licenses, it can accommodate six VMs. Finally, with four licenses, the server can host a total of eight VMs. This relationship shows a direct proportionality between the number of licenses and the total number of VMs, with each additional license enabling two more VMs.
+
+Question Answer Pair Ended
+Q8. Why is Windows Server 2012 licensing moving to a processor model?
+By making this change, Windows Server 2012, System Center 2012 and the Core Infrastructure Server (CIS) will all have consistent licensing model creating alignment across Microsoft infrastructure products. Having a single-licensing model will make it easier for you to buy the right product for your needs and to compare the cost of alternatives (such as individual products, the CIS SKU outside of ECI, ECI and SO on). Additionally, the new licensing model provides a single, familiar, and easy-to-track metric for all infrastructure products further reducing management overhead.
+
+Question Answer Pair Ended
+Q9. How do I calculate the number of licenses I need for a server?
+The number of licenses you will need depends on the number of physical processors on the server and the number of server instances that you will be running. (This only applies for Standard edition because Datacenter edition allows for unlimited VMs.) The larger of these two numbers determines the number of total licenses required.
+Determining the number of physical processor licenses
+Each license covers up to two physical processors, SO to determine the number of licenses needed to fully license a physical server, simply count the number of physical processors in the server, divide that number by two and that tells you the number of licenses that will be needed.
+Here are some examples:
+· You have a 2-processor server. 2 physical processors / 2 (number of processors covered by a license) equals 1. You will need one license to cover a 2-processor server.
+· You have a 4-processor server. 4 physical processors / 2 (number of processors covered by a license) equals 2. You will need two licenses to cover a 4-processor server.
+· You have an 8-processor server. 8 physical processors / 2 (number of processors covered by a license) equals 4. You will need four licenses to cover an 8-processor server.
+Determining the number of virtual instances running
+If you want to run additional VMs but do not require the highly virtualized environment that Datacenter provides (which is unlimited VMs), then you can simply purchase additional Standard edition licenses and assign them to a single physical server to increase your VM entitlements on that server. Each Standard edition license provides you with the rights to run up to two VMs, so to determine the number of Windows Server Standard edition licenses you need, count the total number of total VMs that you will run on the server; divide that number by two, and round up to the nearest whole number.
+For example, if you assign 2 Standard edition licenses to a single server, you will be able to run a total of 4 VMs on that server. If you add additional Standard edition licenses to that server the number of allowed VMs on that particular server will increase by two for a total of six VMs on that server.
+Once the number of licenses needed to cover a physical processor and/or additional VMs is determined, the higher of those two numbers represents the total number of licenses required.
+For example, if you are running 4 virtual machines on a 2-processor server, you will require 1 license to cover the 2 processors; but you will need an additional license to run 4 virtual machines, which means you will need a total of 2 licenses.
+
+Question Answer Pair Ended
+Q10. Can I use one Standard license to cover a 1-processor server?
+Yes. The Standard edition license will allow you to license up to two physical processors on a single server; however it does not require that the server has two physical processors.
+
+Question Answer Pair Ended
+Q11. Can I split my Windows Server 2012 license across multiple servers?
+No. Each license can only be assigned to a single physical server.
+
+Question Answer Pair Ended
+Q12. Can I assign a Windows Server 2012 license to a virtual machine?
+No. A license is assigned to the physical server. Each license will cover up to two physical processors.
+
+Question Answer Pair Ended
+Q13. Can I mix Datacenter and Standard licenses on the same server?
+No. All of the processors on a given server must be licensed with the same version and edition. You can run different editions or older versions of Windows Server software as guests within VMs, but you are not allowed to assign multiple licenses of different versions or editions to the same physical server to license the processors on the server.
+
+Question Answer Pair Ended
+Q14. Can I attach another license of a different version or edition of Windows Server to increase my virtualization rights?
+Yes, you can assign additional Windows Server licenses to a server to increase your virtualization rights. However the newly assigned licenses will need to adhere to their associated licensing rules. For example, if you have a Windows Server Enterprise edition license on a four processor server and want to attach Windows Server 2012 Standard edition licenses to increase your virtualization rights, you will need to ensure that all processors on that server are licensed with Windows Server 2012 Standard edition license as well, which will require a total of two Windows Server 2012 Standard licenses (as each license covers up to two processors).
+
+Question Answer Pair Ended
+Q15. If I want to use the bits from an earlier version or edition, what are my options?
+If you have Windows Server 2012 Datacenter edition you will have the right to downgrade your bits to any prior version or lower edition. If you have Windows Server 2012 Standard edition, you will have the right to downgrade your bits to any prior version of Enterprise, Standard or Essentials editions.
+The ability to run downgrade bits does not change the licensing or support terms in which you can use the product; the purchased product (Windows Server 2012) rights apply. This means that the license will continue to cover two physical processors and the virtualization rights do not change. In addition, the Client Access License (CAL) corresponding to the purchased version will apply, as an exception, if you are running a previous version of one of the eligible downgrades you can use the corresponding CAL version if one exists.
+Here are a few examples.
+
+For those who have purchased a Datacenter 2012 license, the option to downgrade is available to Datacenter 2008. The applicable bit rights for this downgrade are also Datacenter 2008, while the licensing rights remain as Datacenter 2012. 
+
+In the case of a Standard 2012 license, there are multiple downgrade options. One can downgrade to Enterprise 2008 R2, with the bit rights applicable to Enterprise 2008 R2, and the licensing rights reverting to Standard 2012. Alternatively, a downgrade to Standard 2008 is possible, with corresponding bit rights and licensing rights both aligning with Standard 2012. Another option is to downgrade to Essentials 2012, with the bit rights applicable to Essentials 2012, while the licensing rights are maintained as Standard 2012. 
+
+These options provide flexibility in managing software versions while retaining specific licensing rights.
+1 The license will cover up to two processors. 2 The license entitles up to two virtual machines.
+
+Question Answer Pair Ended
+Q16. Is Enterprise edition going away as part of Windows Server 2012 and why?
+Yes. Enterprise edition will be retired as part of the Windows Server 2012 release. Windows Server 2012 Standard edition will include all the premium features previously included in Enterprise edition in the past and the price to purchase the rights to 4 instances of Windows Server 2012 will actually be less expensive than the price of Windows Server 2008 R2 Enterprise edition today. Due to these changes, we have been able to simplify the product lineup while reducing the price per instance of Windows Server for these customers.
+
+Question Answer Pair Ended
+Q17. Is Web Server going away as part of Windows Server 2012 and why?
+Yes. The Web Server product was designed primarily for end customers and service providers that wanted to host web sites. However, consistent feedback from these customers and partners has been that they prefer to use an edition of Windows Server that does not restrict usage to running web workloads.
+Despite the removal of Web Server edition, web workloads running on a Windows Server 2012 edition will continue to receive the "CAL waiver" that is in effect for these workloads today. Windows Server
+CALs will not be required to access the licensed server if it is only being used to run web workloads. See Product Use Rights for details.
+
+Question Answer Pair Ended
+Q18. Are the HPC products going away as part of Windows Server 2012 and why?
+While the HPC edition is being retired, Microsoft will be delivering the HPC Pack 2012 as a free download that can be used with any Windows Server 2012 Standard or Datacenter license. As a result, customers who want to run HPC workloads will be able to do SO on any of their Windows Server 2012 licensed servers (Click here for a free download.). HPC workloads running on Windows Server 2012 Standard or Datacenter editions will continue to receive the "CAL waiver" that is currently in effect for these workloads. Windows Server CALs will not be required to access instances of Windows Server in the Windows Server 2012 licensing model if these instances are simply running HPC workloads. See Product Use Rights for details.
+
+Question Answer Pair Ended
+Q19. If I have Software Assurance in place at the time that Windows Server 2012 is generally available, when will my grant be reflected in my licensing records?
+While you will immediately be able to use the new product and will own the perpetual rights to the edition of Windows Server 2012 that you are transitioning to, your grant will not be reflected in the license position database until you renew your agreement and purchase Software Assurance on the granted licenses. If you do not renew your Software Assurance, your license position will not be reflected in the license position database; however the fact that you had Software Assurance in place at the time of Windows Server 2012 General Availability will establish your proof of license for the new product.
+
+Question Answer Pair Ended
+Q20. If I have Datacenter edition with Software Assurance when Windows Server 2012 is released, which edition will I be entitled to receive?
+If you have Software Assurance on Datacenter edition, you will be entitled to Windows Server 2012 Datacenter edition. Today, a Datacenter license covers up to 1 processor. A Windows Server 2012 Datacenter license will cover up to 2 processors. So for every two current Datacenter licenses with Software Assurance, you will receive one Windows Server 2012 Datacenter edition license.
+
+Question Answer Pair Ended
+Q21. If I have Enterprise edition with Software Assurance when Windows Server 2012 is released, which edition will I be entitled to receive?
+If you have Software Assurance on Enterprise edition, you will be entitled to receive two Standard edition licenses for each Enterprise edition license you have.
+If you are considering moving to a more highly virtualized or private cloud environment, you should consider taking advantage of the Software Assurance Step-Up* benefit to upgrade to Datacenter edition prior to the Windows Server 2012 general availability since the Step-Ups from Enterprise edition to Datacenter edition will be removed from the price lists at that time.
+* If you have an Enterprise Agreement and already have an SA Step-Up from Enterprise edition to Datacenter edition on your Channel Price Sheet (CPS), you will be able to Step-Up from Enterprise edition to Datacenter edition until the end of your enrollment.
+
+Question Answer Pair Ended
+Q22. If I have Standard edition with Software Assurance when Windows Server 2012 is released, which edition will I be entitled to receive?
+If you have Software Assurance on Standard edition today, you will be entitled to receive Standard edition at the general availability of Windows Server 2012. You will receive one Windows Server 2012 Standard edition license for each Standard edition license you have.
+
+Question Answer Pair Ended
+Q23. If the normal Software Assurance transition grant will not cover all of the processors in my server do I need to purchasing additional licenses?
+No. If you have Software Assurance on Enterprise, Standard or Windows Server 2008 R2 HPC editions when Windows Server 2012 is released and the normal Software Assurance transition grant does not cover all of the processors on your physical server, you can qualify for additional licenses by documenting your environment to show where you have Windows Server 2008 R2 Standard edition or Windows Server 2008 R2 HPC editions running on 4-processor servers and/or Windows Server 2008 R2 Enterprise edition running on an 8-processor server. You will then be entitled to the additional licenses needed to cover these processors.
+It is recommended that you complete your self-assessment using the Microsoft Assessment and Planning (MAP) Toolkit or another inventory tool that can accurately archive a time/date-stamped inventory of your hardware with Windows Server installations.
+Upon contract expiration, you can renew Software Assurance on all licenses granted as a result of transitioning to the Windows Server 2012 licensing model.
+
+Question Answer Pair Ended
+Q24. If I have Web Server edition with Software Assurance when Windows Server 2012 is released, which edition will I be entitled to receive?
+If you have Software Assurance on Web Server edition, you will receive an additional Windows Server 2012 Standard edition license that you can use while also maintaining your rights to run your current Web Server license. For every two Windows 2008 R2 Web Server edition licenses, you will receive one Windows Server 2012 Standard edition license. If you have an odd number of Windows 2008 R2 Web Server edition licenses, your grant will be based on rounding up to the next whole even number.
+You will continue to have the ability to host web content on your new Windows Server 2012 Standard edition license without needing a Windows Server CAL to access the server, but any other workloads that you decide to run on your new server will follow the standard Windows CAL licensing requirements.
+
+Question Answer Pair Ended
+Q25. If I have an HPC edition with Software Assurance when Windows Server 2012 is released, which edition will I be entitled to receive?
+If you have Software Assurance on Windows HPC Server 2008 R2 Suite, you will receive a license grant for Windows Server 2012 Standard edition. For each Windows HPC Server 2008 R2 Suite (which includes both a Windows Server 2008 R2 HPC edition license and Microsoft HPC Pack 2008 R2 Enterprise software) you will receive one Windows Server 2012 Standard edition license.
+If you have Software Assurance on Windows Server 2008 R2 HPC edition or Microsoft HPC Pack 2008 R2 Enterprise, you will receive an additional Windows Server 2012 Standard edition that you can use while
+also maintaining your rights to run your current HPC licenses. You will receive one Windows Server 2012 Standard edition license for every two Windows Server 2008 R2 HPC edition license or Microsoft HPC Pack 2008 R2 Enterprise licenses you have. If you have an odd number of Windows Server 2008 R2 HPC edition or Microsoft HPC Pack 2008 R2 Enterprise licenses, your grant will be based on rounding up to the next whole number.
+You will continue to have the ability to run HPC workloads on your new Windows Server 2012 Standard edition license without needing a Windows Server CAL to access the server, but any other workloads that you decide to run on your new server will follow the standard Windows CAL licensing requirements.
+
+Question Answer Pair Ended
+Q26. What are my Software Assurance migration rights by Microsoft purchase program?
+Each Microsoft purchase program has different rules for your Software Assurance migration entitlement at the end of your enrollment. See the chart below.
+
+The Enterprise Agreement and Open Value programs provide perpetual rights to the Windows Server 2012 edition. This means users can continue using the software indefinitely after the agreement period ends. 
+
+For the Enterprise Agreement Subscription, Enrollment for Education Solutions, Open Value Subscription, and Open Value Subscription for Education Solutions, users can utilize the Windows Server 2012 edition during their enrollment. At the end of the enrollment, there is an option to buy out the original Windows Server 2008 R2 product at the original CPS price or purchase the new Windows Server 2012 product at the buy-out price listed at the time. Alternatively, users can renew their enrollment at the new Windows Server 2012 annual subscription price. 
+
+These options provide flexibility in maintaining access to the software, either through outright purchase or continued subscription.
+
+Under the Select/Open program, participants are granted perpetual rights to the current edition of Windows Server 2012. This means that once the software is acquired, the user has the right to use it indefinitely without the need for further renewals or additional payments for that specific version. This arrangement provides long-term access and stability for users who choose this program, ensuring they can continue to utilize the Windows Server 2012 edition as needed.
+Note: The Enrollment for Core Infrastructure (ECI) follows the same rules as stated for the Enterprise Agreement in the chart above.
+
+Question Answer Pair Ended
+Q27. How much will Windows Server 2012 Standard and Datacenter editions cost?
+For your specific pricing, contact your Microsoft reseller. Actual prices may vary. Microsoft does not determine pricing or payment terms for licenses acquired through resellers.
+
+The information outlines the estimated retail prices for two editions of a product under a volume licensing agreement with no specific level. The Datacenter edition is priced at $4,809, indicating it is likely designed for larger-scale operations or enterprises requiring extensive resources. In contrast, the Standard edition is available for $882, suggesting it is more suitable for smaller businesses or those with less demanding needs. These prices reflect the different capabilities and intended use cases of each edition.
+
+Question Answer Pair Ended
+Q28. Can I use my Windows Server 2008 CAL to access Windows Server 2012?
+No. The CAL accessing the instance of Windows Server must be equivalent or higher in version than the server being accessed. You will need a Windows Server 2012 CAL to access a Windows Server 2012 instance.
+
+Question Answer Pair Ended
+Q29. Do I still need a separate CAL to access Remote Desktop Services (RDS) and Active Directory Rights Management Service (ADRMS)?
+Yes. The licensing requirements for Remote Desktop Services (RDS) and Active Directory Rights Management Service (ADRMS) have not changed with Windows Server 2012. Customers are still required to purchase an ADRMS or RDS CAL in addition to a Windows Server CAL to access ADRMS or RDS functionality. The CAL accessing the instance of Windows Server must be equivalent or higher in version than the server being accessed.
+
+Question Answer Pair Ended
+Q30. What is the price of running Windows Server 2012 on Windows Azure under "preview" and "general availability"?
+Windows Server 2012 and Windows Server 2008 R2 will continue to be available on Azure at the same price.
+
+Question Answer Pair Ended
+Q31. Can I move Windows Server 2012 licenses and images between Hyper-V and Azure?
+Windows Server 2012 licenses just like Windows Server 2008 R2 are not eligible for the license mobility benefits under Software Assurance. You can continue to take advantage of the license mobility rights for other server applications, however Windows Server will continue to be purchased separately from the service provider or Azure.
+
+Question Answer Pair Ended
+Q32. What are the System Center license requirements for managing Windows Server 2012 instances running on Azure?
+You can use the License Mobility benefits under Software Assurance to assign your System Center 2012 license to a Windows Server instance running on Azure.
+
+Question Answer Pair Ended
+Q33. How do I license Windows Server 2012 on ECI to run some instances on Azure?
+You are not able to run your ECI Windows Server license in Azure because Windows Server does not offer mobility right as a standalone license or as a component product within the Core Infrastructure Suite product purchased under an ECI enrollment or outside of ECI.
+
+Question Answer Pair Ended
+Q34. What are my licensing options for a Disaster Recovery server?
+If you are storing virtual machines for future use in a Disaster Recovery situation you will not need additional licensing for that server. Only when you run an instance on that server will a license be required (see the definition of running an instance below). You should be mindful that any of your replicated virtual instances, when running, need to be running on a server appropriately licensed to support that running instance.
+Running Instance means an Instance of software that is loaded into memory and for which one or more instructions have been executed. (You "Run an Instance" of software by loading it into memory and executing one or more of its instructions.) Once running, an Instance is considered to be running (whether or not its instructions continue to execute) until it is removed from memory.
+There are two ways in which you can license a server for Disaster Recovery, by purchasing a Windows Server license or by using the Cold Back-up for Disaster Recovery Software Assurance benefit. Cold Back-up for Disaster Recovery allows you to keep a backup server ready for use in case your primary (production) server fails due to earthquakes, floods or any kind of disaster. If a disaster strikes you can immediately switch over to the Cold Disaster Recovery server. In order to utilize this benefit you must comply with the follow terms:
+· The software in the Disaster Recovery server should comply with the use rights associated with the software. · The server cannot be in the same cluster as the production server. · The server cannot be turned on except for updates to the software (patching) or testing. The server may of course be turned on in the event of a disaster for Disaster Recovery. · The Disaster Recovery server and the production instances may run concurrently while recovering from a disaster. At all other times the Disaster Recovery server should be switched off except as above
+Remember that in order to utilize this Software Assurance benefit, all licenses in use must have active Software Assurance coverage. This includes any CALs required to access the Disaster Recovery server. This benefit ends when Software Assurance coverage on your licenses ends. You can find more information about the use rights for this benefit in the Product Use Rights document.
+
+Question Answer Pair Ended
+Q35. When will the Windows Server 2012 Licensing changes take place?
+Licensing changes will become effective at the general availability of Windows Server 2012, which is expected to be in September 2012.
+
+Question Answer Pair Ended
+Q36. What support is available for an older version of Windows Server?
+See the Windows Server Support Lifecycle website for details.
+
+Question Answer Pair Ended
+Q37. What is Windows Server 2012 Essentials?
+Windows Server 2012 Essentials is the latest version of Windows Small Business Server Essentials. It is a cloud enabled first server with an intuitive user interface. It can run on physical servers with up to two processors and has been designed for small businesses with up to 25 users.
+
+Question Answer Pair Ended
+Q38. What are some of the features that are now available in Windows Server 2012 Essentials?
+Windows Server 2012 Essentials incorporates best-of-breed 64-bit product technologies to deliver a server environment well-suited for the vast majority of small businesses. The product technologies include:
+· Windows Server 2012 operating system · Data protection · "Anywhere" access · Health monitoring · Workload flexibility · Extensibility · Add-ons for many small business solutions, including a connector to Office 365
+Customers can use Windows Server 2012 Essentials as a platform to run critical line-of-business applications and other on-premises workloads. It can also provide an integrated management experience when running cloud-based applications and services, such as email, collaboration, online backup, and more.
+
+Question Answer Pair Ended
+Q39. What are the different editions available with Windows Server 2012 Essentials?
+There is only one edition-Windows Server 2012 Essentials. It is a flexible offering that provides a platform for running on-premises or cloud-based workloads.
+
+Question Answer Pair Ended
+Q40. Will there be a next version of Windows Small Business Server 2011 Standard?
+No. Windows Small Business Server 2011 Standard, which includes Exchange Server and Windows server component products, will be the final such Windows Server offering. This change is in response to
+small business market trends and behavior. The small business computing trends are moving in the direction of cloud computing for applications and services such as email, online back-up and line-of- business tools.
+
+Question Answer Pair Ended
+Q41. Will there be a next version of Windows Small Business 2011 Premium Add-on?
+No. Windows Small Business Server 2011 Premium Add-on, which includes SQL Server and Windows Server as component products, will be the final such Windows Server offering.
+
+Question Answer Pair Ended
+Q42. If I have Windows Small Business Server 2011 Essentials with Software Assurance when Windows Server 2012 is released, which edition will I be entitled to receive?
+If you have Software Assurance on Small Business Server 2011 Essentials, you will receive one Windows Server 2012 Essentials license.
+This grant will be reflected upon your agreement renewal; however you are entitled to use the granted product upon availability.
+
+Question Answer Pair Ended
+Q43. If I have Windows Small Business Server 2011 Standard edition with Software Assurance when Windows Server 2012 is released, which edition will I be entitled to receive?
+If you have Software Assurance on Small Business Server 2011 Standard edition, you will receive two Windows Server 2012 Standard edition license and one Exchange Server Standard 2010 license.
+This grant will be reflected upon your agreement renewal; however you are entitled to use the granted product upon availability.
+
+Question Answer Pair Ended
+Q44. If I have Windows Small Business Server 2011 Standard CAL with Software Assurance when Windows Server 2012 is released, what will I be entitled to receive?
+If you have Software Assurance on Small Business Server 2011 Standard CAL, you will receive one Windows Server 2012 CAL license and one Exchange Server CAL license.
+This grant will be reflected upon your agreement renewal; however you are entitled to use the granted product upon availability.
+
+Question Answer Pair Ended
+Q45. If I have Windows Small Business Server 2011 Premium Add-on with Software Assurance when Windows Server 2012 is released, which edition will I be entitled to receive?
+If you have Software Assurance on Small Business Server 2011 Premium Add-on edition, you will receive one Windows Server 2012 Standard edition license and one SQL Server 2012 Standard edition license.
+This grant will be reflected upon your agreement renewal; however you are entitled to use the granted product upon its availability.
+
+Question Answer Pair Ended
+Q46. If I have Windows Small Business Server 2011 Premium Add-on CAL with Software Assurance when Windows Server 2012 is released, what will I be entitled to receive?
+If you have Software Assurance on Small Business Server 2011 Premium Add-on CAL, you will receive one SQL Server 2012 CAL license and one Windows Server 2012 CAL license. This grant will be reflected upon your agreement renewal; however you are entitled to use the granted product upon its availability.
+
+Question Answer Pair Ended
+Q47. How much will Windows Server Essentials cost?
+For your specific pricing, contact your Microsoft reseller. Actual prices may vary. Microsoft does not determine pricing or payment terms for licenses acquired through resellers.
+
+The information outlines the pricing details for two software editions under a specific licensing model. The Essentials edition is available for purchase at an estimated retail price of $501 through Volume Licensing Open with no specific level. In contrast, the Foundation edition is not available for direct purchase through this licensing model and is instead offered exclusively through Original Equipment Manufacturer (OEM) channels. This indicates that the Foundation edition is typically pre-installed on hardware by manufacturers rather than being sold separately.
+
+Question Answer Pair Ended
+Q48. Are there any licensing changes happening to the Foundation edition as part of Windows Server 2012?
+There are no changes to the Foundation edition licensing or pricing model. To see the full list of features and licensing, go to the Foundation Server 2012 website.
+
+Question Answer Pair Ended
