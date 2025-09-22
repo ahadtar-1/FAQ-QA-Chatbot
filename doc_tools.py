@@ -20,7 +20,7 @@ _ = load_dotenv(find_dotenv())
 openai_api_key = os.getenv("OPENAI_API_KEY")
 upstage_api_key = os.getenv("UPSTAGE_API_KEY")
 pinecone_api_key = os.getenv("PINECONE_API_KEY")
-index_name = "testfaqindex"
+index_name = "faqsampleindex"
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=openai_api_key)
 llm = ChatOpenAI(model = "gpt-4o", temperature = 0)
 
