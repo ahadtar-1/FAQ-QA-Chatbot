@@ -4,6 +4,7 @@ The file comprises of the User Interface for the FAQ QA Chatbot.
 
 import gradio as gr
 from doc_tools import upload_pdf
+from retrieval_pipeline import refine_answer
 
 
 with gr.Blocks(theme=gr.themes.Glass(primary_hue="slate")) as demo:
@@ -24,6 +25,12 @@ with gr.Blocks(theme=gr.themes.Glass(primary_hue="slate")) as demo:
         question_box = gr.Textbox(label="Question", placeholder="Enter your question here...", lines = 4)
     
     send_button = gr.Button("Send")
-    qa_output = gr.Textbox(label="Answer", visible=False, lines=4)
+    qa_output = gr.Textbox(label="Answer", visible=True, lines=6)
+
+    send_button.click(
+          refine_answer,
+          inputs = question_box,
+          outputs = [qa_output]
+        )
 
 demo.launch(share = True)

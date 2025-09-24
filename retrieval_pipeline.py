@@ -9,6 +9,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone, PineconeException
 from langchain.schema import SystemMessage, HumanMessage
+import gradio as gr
 from dotenv import load_dotenv, find_dotenv
 
 _ = load_dotenv(find_dotenv())
@@ -68,19 +69,23 @@ def refine_answer(query: str)-> str:
         
     """
 
-
+    
     retrieved_answer = retrieve_similar_docs(query)
     if(retrieved_answer != "No similar docs." and retrieved_answer != False):
         question, sep, answer = retrieved_answer.partition("Answer: ")
+    if(retrieved_answer == "No similar docs."):
+        return gr.update(value="There is no available information on the question.")
+    else:
+        return gr.update(value="We are unable to provide an answer at the moment. There was an error in the API.")
 
-        messages = [
+    messages = [
         SystemMessage(
-            content=[
+        content=[
             {
               "type": "text",    
-              "text": "You are a Text Assistant. Your task is to edit the text as per the following instructions. Do not add new words or remove information in the text. Do not combine a set of paragraphs together that already exist in the text, keep them separate. Do not break a paragraph into two that already exists as a singular paragraph in the text. Do not combine a set of sentences together that already exist in the text, keep them separate. Do not break a sentence into two that already exists as a singular sentence in the text. Break a paragraph into bullet points(that exist in the paragraph), if the paragraph contains a list of bullet points. Break a sentence into bullet points(that exist in the sentence), if the sentence contains a list of bullet points. Do not add commas or semicolons where they are not present. Do not replace commas or semicolons where they are present. Only remove the information, that is at the absolute end of the text, which is not a part of the text in general. If no changes are needed, generate the text as it exists."
+              "text": "You are a Text Assistant. Your task is to edit the text as per the following instructions. Do not add new words or remove information in the text. Do not combine a set of paragraphs together that already exist in the text, keep them separate. Do not break a paragraph into two that already exists as a singular paragraph in the text. Do not combine a set of sentences together that already exist in the text, keep them separate. Do not break a sentence into two that already exists as a singular sentence in the text. Break a paragraph into bullet points(that exist in the paragraph), if the paragraph contains a list of bullet points. Break a sentence into bullet points(that exist in the sentence), if the sentence contains a list of bullet points. Do not add commas or semicolons where they are not present. Do not replace commas or semicolons where they are present. Fix spelling mistakes where they are present. Only remove the information, that is at the absolute end of the text, which is not a part of the text in general. If no changes are needed, generate the text as it exists."
             }
-            ]
+        ]
         ),
         HumanMessage(
         content=[
@@ -90,17 +95,18 @@ def refine_answer(query: str)-> str:
             }
         ]
         )
-        ]
+    ]
 
-        try:
-            response = llm.invoke(messages)
-            return response.content
-        except Exception as e:
-            return None
+    try:
+        response = llm.invoke(messages)
+        print(response.content)
+        return gr.update(value=response.content)
+    except Exception as e:
+        return gr.update(value="We are unable to provide an answer at the moment. There was an error in the API.")
 
 
-if __name__ == "__main__":
-    question = "What is Windows Server 2012 Essentials?"
-    refined_answer = refine_answer(question)
-    print(refined_answer)
+#if __name__ == "__main__":
+#    question = "What is Windows Server 2012 Essentials?"
+#    refined_answer = refine_answer(question)
+#    print(refined_answer)
     
