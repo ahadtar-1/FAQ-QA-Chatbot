@@ -13,14 +13,7 @@ conda activate faqrag
 
 pip install -r requirements.txt
 ```
-
-### Testing Vector Database Retrieval
-
-```bash
-python retrieval_pipeline.py
-```
-
-### Testing PDF Upload and Storage
+### Testing Application
 
 ```bash
 python gradio_frontend.py

@@ -374,13 +374,10 @@ def parse_doc(file_path: str):
     files = {"document": open(file_path, "rb")}
     data = {"ocr": "force", "base64_encoding": "['table']", "model": "document-parse", "output_formats": "['html', 'text']"}
     response = requests.post(url, headers=headers, files=files, data=data)
-    print(response.status_code)
     if(response.status_code == 200):       
         json_response = response.json()
         name_of_file = os.path.basename(file_path)
-        print("Name of file: ", name_of_file)
         final_name_of_file = name_of_file.replace(".pdf", "")
-        print("Final Name of file: ", final_name_of_file)
         with open(f"./json_parsedoutputs/{final_name_of_file}.json", "w", encoding="utf-8") as f:
            json.dump(json_response, f, indent=4, ensure_ascii=False)
         return True

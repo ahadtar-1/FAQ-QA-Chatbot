@@ -44,14 +44,11 @@ def retrieve_similar_docs(query: str)-> str:
             return "No similar docs."
     
         for doc, score in similar_docs:
-            print("Score: ", score)
             similar_doc = doc.page_content
-            print("Highest score doc: ", "\n", similar_doc)
     
         return similar_doc
     
     except Exception as e:
-        print(f"Error retrieving similar documents: {e}")
         return False
 
 
@@ -70,12 +67,15 @@ def refine_answer(query: str)-> str:
     """
 
     
+    if(query == ""):
+        return gr.update(value="Please provide a question.")
+    
     retrieved_answer = retrieve_similar_docs(query)
     if(retrieved_answer != "No similar docs." and retrieved_answer != False):
         question, sep, answer = retrieved_answer.partition("Answer: ")
     if(retrieved_answer == "No similar docs."):
         return gr.update(value="There is no available information on the question.")
-    else:
+    if(retrieved_answer == False):
         return gr.update(value="We are unable to provide an answer at the moment. There was an error in the API.")
 
     messages = [
@@ -99,14 +99,7 @@ def refine_answer(query: str)-> str:
 
     try:
         response = llm.invoke(messages)
-        print(response.content)
         return gr.update(value=response.content)
     except Exception as e:
         return gr.update(value="We are unable to provide an answer at the moment. There was an error in the API.")
-
-
-#if __name__ == "__main__":
-#    question = "What is Windows Server 2012 Essentials?"
-#    refined_answer = refine_answer(question)
-#    print(refined_answer)
     
