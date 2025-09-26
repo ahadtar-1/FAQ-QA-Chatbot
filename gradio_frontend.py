@@ -13,7 +13,7 @@ with gr.Blocks(theme=gr.themes.Glass(primary_hue="slate")) as demo:
 
     file_input = gr.File(type="filepath", file_types=[".pdf"], label="Upload")
     upload_button = gr.Button("📤 Process PDF")
-    output = gr.Textbox(label = "Output", visible = False, lines = 1)
+    output = gr.Textbox(label = "PDF Status", visible = True, lines = 1)
             
     upload_button.click(
         upload_pdf,

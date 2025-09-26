@@ -3,7 +3,9 @@ The module comprises of the tools to upload, parse, and store embeddings of PDFs
 """
 
 import os
+import pandas as pd
 import json
+import csv
 import requests
 import shutil
 import base64
@@ -23,6 +25,7 @@ pinecone_api_key = os.getenv("PINECONE_API_KEY")
 index_name = "faqsampleindex"
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=openai_api_key)
 llm = ChatOpenAI(model = "gpt-4o", temperature = 0)
+df = pd.read_csv("./pdf_log.csv")
 
 
 def ends_with_digit(text: str)-> bool:
@@ -94,7 +97,6 @@ def clean_table_of_contents(data: list)-> list:
     double_lined_questions = 0
     
     for q in data:
-        print(q)
         idx = q.rfind('?')
         if(idx == -1):
             double_lined_questions += 1
@@ -295,7 +297,7 @@ def extract_questions_answers(file_path: str)-> dict:
                         if("base64_encoding" in element_keys):
                             table_description = get_table_description(element["base64_encoding"])
                             if(table_description == None):
-                                return "There was an error in the Open AI API. Unable to parse PDF."
+                                return "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."
                             else:
                                 answer = answer + "\n" + table_description + "\n"
                         else:
@@ -317,10 +319,19 @@ def extract_questions_answers(file_path: str)-> dict:
                         answer = ""
                         break
 
+    #Creating CSV file of question-answer pairs for record
+    name_of_file = os.path.basename(file_path)
+    csv_file_name = name_of_file.replace(".json", ".csv")
+    csv_file_path = "./extracted_qa_pairs/" + csv_file_name
+    pd.DataFrame(questions_answers).rename(columns={"questions": "question", "answers": "answer"}).to_csv(csv_file_path, index=False)
+    df = pd.read_csv("./pdf_log.csv")
+    df.loc[df["parsed_json_link"] == file_path, "questions_answers_extracted"] = csv_file_path
+    df.to_csv("./pdf_log.csv", index=False)
+        
     return questions_answers
 
 
-def store_embeddings(question_answers: dict)-> bool:
+def store_embeddings(file_path: str, question_answers: dict)-> bool:
     """
     Stores question-answer pairs in the Pinecone Vector Database
 
@@ -347,6 +358,11 @@ def store_embeddings(question_answers: dict)-> bool:
     try:
         vectorstore = PineconeVectorStore(index_name=index_name, embedding=embeddings)
         vectorstore.from_texts(texts=qa_list, embedding=embeddings, index_name=index_name)
+
+        #Recording embeddings for PDF already created to avoid creating embeddings for the same PDF
+        df = pd.read_csv("./pdf_log.csv")
+        df.loc[df["uploaded_pdf_link"] == file_path, "embeddings_created"] = "created"
+        df.to_csv("./pdf_log.csv", index=False)
         return True
     except Exception as e:
         return False
@@ -380,6 +396,11 @@ def parse_doc(file_path: str):
         final_name_of_file = name_of_file.replace(".pdf", "")
         with open(f"./json_parsedoutputs/{final_name_of_file}.json", "w", encoding="utf-8") as f:
            json.dump(json_response, f, indent=4, ensure_ascii=False)
+           
+           #Recording PDF is already parsed to avoid api call again
+           df = pd.read_csv("./pdf_log.csv")
+           df.loc[df["uploaded_pdf_link"] == file_path, "parsed_json_link"] = f"./json_parsedoutputs/{final_name_of_file}.json"
+           df.to_csv("./pdf_log.csv", index=False)
         return True
     else:
         return False
@@ -410,17 +431,71 @@ def upload_pdf(path: str):
 
     os.makedirs(directory_path_to_save, exist_ok = True)
     os.makedirs(json_output_dir, exist_ok = True)
-
+    df = pd.read_csv("./pdf_log.csv")
     file_name = os.path.basename(path)
     file_path = os.path.join(directory_path_to_save, file_name)
     json_file_path = os.path.join(json_output_dir, file_name.replace(".pdf", ".json"))
-    if(os.path.exists(file_path) and os.path.exists(json_file_path)):
-        return gr.update(value="This file has already been uploaded. Please upload a new file.", visible = True)
+    if(os.path.exists(file_path)):
+        embeddings_created = df.loc[df["uploaded_pdf_link"] == file_path, "embeddings_created"].squeeze()
+        json_parsed_link_created = df.loc[df["uploaded_pdf_link"] == file_path, "parsed_json_link"].squeeze()
+        qa_pairs_extracted = df.loc[df["uploaded_pdf_link"] == file_path, "questions_answers_extracted"].squeeze()
+    
+    if(os.path.exists(file_path) and isinstance(embeddings_created, str)):
+        return gr.update(value="This file has already been uploaded and embedded. Please upload a new file.", visible = True)
+    if(os.path.exists(file_path) and pd.isna(json_parsed_link_created)):
+        result = parse_doc(file_path)
+        if(result == False):
+            return gr.update(value="PDF not successfully processed. The Upstage API is not working.", visible = True)
+        else:
+            qa_pairs = extract_questions_answers(json_file_path)
+            if(qa_pairs == "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."):
+                return gr.update(value=qa_pairs, visible = True)
+            else:
+                result = store_embeddings(file_path, qa_pairs)
+                if(result == False):
+                    return gr.update(value="There was an error in the Pinecone API. Unable to store PDF.", visible = True)
+                else:
+                    return gr.update(value = "PDF successfully stored in Vector Database.", visible = True)
+    if(os.path.exists(file_path) and isinstance(json_parsed_link_created, str) and pd.isna(qa_pairs_extracted)):
+        qa_pairs = extract_questions_answers(json_parsed_link_created)
+        if(qa_pairs == "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."):
+            return gr.update(value=qa_pairs, visible = True)
+        else:
+            result = store_embeddings(file_path, qa_pairs)
+            if(result == False):
+                return gr.update(value="There was an error in the Pinecone API. Unable to store PDF.", visible = True)
+            else:
+                return gr.update(value = "PDF successfully stored in Vector Database.", visible = True)
+    if(os.path.exists(file_path) and isinstance(json_parsed_link_created, str) and isinstance(qa_pairs_extracted, str) and pd.isna(embeddings_created)):
+        df_qa = pd.read_csv(qa_pairs_extracted)
+        qa_pairs = {"questions": df_qa["question"].tolist(), "answers": df_qa["answer"].tolist()}
+        result = store_embeddings(file_path, qa_pairs)
+        if(result == False):
+            return gr.update(value="There was an error in the Pinecone API. Unable to store PDF.", visible = True)
+        else:
+            return gr.update(value = "PDF successfully stored in Vector Database.", visible = True) 
     else:
         shutil.copy(path, file_path)
+        new_row = {
+        "uploaded_pdf_link": file_path,
+        "parsed_json_link": None,
+        "question_answers_extracted": None,
+        "embeddings_created": None
+        }
+        
+        df_new = pd.DataFrame([new_row])
+        df_new.to_csv("./pdf_log.csv", mode="a", index=False, header=not os.path.exists("./pdf_log.csv"))
         result = parse_doc(file_path)
-        if(result == True):            
-            return gr.update(value="PDF successfully processed", visible = True)
-        else:           
+        if(result == False):
             return gr.update(value="PDF not successfully processed. The Upstage API is not working.", visible = True)
+        else:
+            qa_pairs = extract_questions_answers(json_file_path)
+            if(qa_pairs == "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."):
+                return gr.update(value=qa_pairs, visible = True)
+            else:
+                result = store_embeddings(file_path, qa_pairs)
+                if(result == False):
+                    return gr.update(value="There was an error in the Pinecone API. Unable to store PDF.", visible = True)
+                else:
+                    return gr.update(value = "PDF successfully stored in Vector Database.", visible = True)
     

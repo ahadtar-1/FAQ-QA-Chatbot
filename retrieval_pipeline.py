@@ -102,4 +102,3 @@ def refine_answer(query: str)-> str:
         return gr.update(value=response.content)
     except Exception as e:
         return gr.update(value="We are unable to provide an answer at the moment. There was an error in the API.")
-    
