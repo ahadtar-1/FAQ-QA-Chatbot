@@ -26,7 +26,7 @@ python gradio_frontend.py
 python routes.py
 ```
 
-# APIs
+## APIs
 
 ### Upload File
 
