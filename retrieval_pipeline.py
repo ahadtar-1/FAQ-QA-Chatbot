@@ -8,7 +8,8 @@ from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone, PineconeException
-from langchain.schema import SystemMessage, HumanMessage
+from langchain.messages import SystemMessage, HumanMessage
+from document_grader import document_grading
 import gradio as gr
 from dotenv import load_dotenv, find_dotenv
 
@@ -21,7 +22,7 @@ embeddings = OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=ope
 llm = ChatOpenAI(model = "gpt-4o", temperature = 0)
 
 
-def retrieve_similar_docs(query: str)-> str:
+def retrieve_similar_docs(query: str)-> list:
     """
     Retrieves the question-answer pair with the highest similarity to the query sent by the user from the Pinecone Vector Database
 
@@ -30,24 +31,25 @@ def retrieve_similar_docs(query: str)-> str:
     query: str
         The query sent by the user
 
-    similar_doc: str
-        The document with the highest similarity
+    similar_docs_list: list
+        The documents with the highest similarity
     
     """
 
     
     try:
+        similar_docs_list = []
         vectorstore = PineconeVectorStore(index_name=index_name, embedding=embeddings)
-        similar_docs = vectorstore.similarity_search_with_score(query, k=1)
+        similar_docs = vectorstore.similarity_search_with_score(query, k=4)
 
         if similar_docs == None:
             return "No similar docs."
     
         for doc, score in similar_docs:
             similar_doc = doc.page_content
+            similar_docs_list.append(similar_doc)
     
-        return similar_doc
-    
+        return similar_docs_list    
     except Exception as e:
         return False
 
@@ -70,35 +72,48 @@ def refine_answer(query: str)-> str:
     if(query == ""):
         return gr.update(value="Please provide a question.")
     
-    retrieved_answer = retrieve_similar_docs(query)
-    if(retrieved_answer != "No similar docs." and retrieved_answer != False):
-        question, sep, answer = retrieved_answer.partition("Answer: ")
-    if(retrieved_answer == "No similar docs."):
+    retrieved_answers = retrieve_similar_docs(query)
+    if(retrieved_answers != "No similar docs." and retrieved_answers != False):
+        answers = ""
+        relevant_docs = document_grading(query, retrieved_answers)
+        if(relevant_docs == "There was an error with the Open AI API. Please try again."):
+            return gr.update(value = "There was an error with the Open AI API. Please try again.")
+        if(relevant_docs == "There is no relevant information available for the given question."):
+            return gr.update(value = "There is no relevant information available for the given question.")
+        if(len(relevant_docs) == 1):
+            question, sep, answer = relevant_docs[0].partition("Answer: ")
+            answers = answer
+        if(len(relevant_docs) > 1):
+            for doc in relevant_docs:
+                question, sep, answer = doc.partition("Answer: ")
+                answers = answers + answer + "\n" + "\n" 
+    if(retrieved_answers == "No similar docs."):
         return gr.update(value="There is no available information on the question.")
-    if(retrieved_answer == False):
+    if(retrieved_answers == False):
         return gr.update(value="We are unable to provide an answer at the moment. There was an error in the API.")
-
-    messages = [
-        SystemMessage(
-        content=[
-            {
-              "type": "text",    
-              "text": "You are a Text Assistant. Your task is to edit the text as per the following instructions. Do not add new words or remove information in the text. Do not combine a set of paragraphs together that already exist in the text, keep them separate. Do not break a paragraph into two that already exists as a singular paragraph in the text. Do not combine a set of sentences together that already exist in the text, keep them separate. Do not break a sentence into two that already exists as a singular sentence in the text. Break a paragraph into bullet points(that exist in the paragraph), if the paragraph contains a list of bullet points. Break a sentence into bullet points(that exist in the sentence), if the sentence contains a list of bullet points. Do not add commas or semicolons where they are not present. Do not replace commas or semicolons where they are present. Fix spelling mistakes where they are present. Only remove the information, that is at the absolute end of the text, which is not a part of the text in general. If no changes are needed, generate the text as it exists."
-            }
-        ]
-        ),
-        HumanMessage(
-        content=[
-            {
-              "type": "text",
-              "text":  answer
-            }
-        ]
-        )
-    ]
 
     try:
+        messages = [
+            SystemMessage(
+            content=[
+                {
+                "type": "text",    
+                "text": "You are a Text Assistant. Your task is to edit the text as per the following instructions. Do not add new words or remove information in the text. Do not combine a set of paragraphs together that already exist in the text, keep them separate. Do not break a paragraph into two that already exists as a singular paragraph in the text. Do not combine a set of sentences together that already exist in the text, keep them separate. Do not break a sentence into two that already exists as a singular sentence in the text. Break a paragraph into bullet points(that exist in the paragraph), if the paragraph contains a list of bullet points. Break a sentence into bullet points(that exist in the sentence), if the sentence contains a list of bullet points. Do not add commas or semicolons where they are not present. Do not replace commas or semicolons where they are present. Fix spelling mistakes where they are present. Only remove the information, that is at the absolute end of the text, which is not a part of the text in general. If no changes are needed, generate the text as it exists."
+                }
+            ]
+            ),
+            HumanMessage(
+            content=[
+                {
+                "type": "text",
+                "text":  answers
+                }
+            ]
+            )
+        ]
+
         response = llm.invoke(messages)
-        return gr.update(value=response.content)
+        return response.content
     except Exception as e:
         return gr.update(value="We are unable to provide an answer at the moment. There was an error in the API.")
+

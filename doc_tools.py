@@ -14,7 +14,7 @@ from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone, PineconeException
-from langchain.schema import HumanMessage
+from langchain.messages import SystemMessage, HumanMessage
 import gradio as gr
 from dotenv import load_dotenv, find_dotenv
 
@@ -164,14 +164,15 @@ def get_table_description(text: str)-> str:
 
     
     message = HumanMessage(
-    content=[
+    content_blocks=[
         {
             "type": "text", 
             "text": "Your task is to provide an explanation of the specific information in the table. The explanation must be of moderate length, written in neat and tidy English, and include the specific details. The explanation must not start with (The table .. or This table ..) and there must be no special characters."
         },
         {
-            "type": "image_url",
-            "image_url": {"url": f"data:image/jpeg;base64,{text}"}
+            "type": "image",
+            "base64": f"{text}",
+            "mime_type": "image/jpeg"
         }
     ]
     )
@@ -368,7 +369,7 @@ def store_embeddings(file_path: str, question_answers: dict)-> bool:
         return False
 
 
-def parse_doc(file_path: str):
+def parse_doc(file_path: str)-> bool:
     """
     Sends a request to Upstage AI api to parse the PDF
 
@@ -406,7 +407,7 @@ def parse_doc(file_path: str):
         return False
 
 
-def upload_pdf(path: str):
+def upload_pdf(path: str)-> dict:
     """
     Uploads a PDF file and stores it in a directory
 
