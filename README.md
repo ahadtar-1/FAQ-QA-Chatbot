@@ -4,20 +4,68 @@ This project implements an FAQ Retrieval Augmented Generation Chatbot for the pu
 
 ### Set up and Installation
 
-This project can be run in a development enviroment which facilitates Python. For that purpose a conda environment should be created (**python 3.10**) to preserve the packages and dependencies. The requirements file should be executed after the conda environment is created to import the specific dependencies needed to run the project. Once the dependencies are imported then a .env file should be created and an Upstage API Key, Open AI API Key, and Pinecone API Key must be inserted. 
+This project can be run in a development enviroment which facilitates Python. For that purpose a conda environment should be created (**python 3.13**) to preserve the packages and dependencies. The requirements file should be executed after the conda environment is created to import the specific dependencies needed to run the project. Once the dependencies are imported then a .env file should be created and an Upstage API Key, Open AI API Key, and Pinecone API Key must be inserted. 
 
 ```bash
-conda create -n faqrag python=3.10
+conda create -n faqrag python=3.13
 
 conda activate faqrag
 
 pip install -r requirements.txt
 ```
 
-### Run the application
+#### Case 1 - Run the application through Gradio
 
 ```bash
 python gradio_frontend.py
+```
+
+#### Case 2 - Run the application through FastAPI
+
+```bash
+python routes.py
+```
+
+# APIs
+
+### Upload File
+
+A post request would be sent to the fastapi application. It would comprise of the FAQ pdf file. The response sent back from the fastapi application would be the status of the file upload.
+
+#### API Endpoint
+
+```
+127.0.0.1:8000/uploadfile/ 
+```
+
+#### Payload
+```
+{
+    "file" : NIST RMF Categorize Step-FAQs.pdf
+
+    key must be the string "file"
+    value must be the file
+}
+```
+
+### Generate Answer
+
+A post request would be sent to the fastpi application. It would comprise of a user query. The response sent back from the fastapi application would be the response to the user's query.
+
+#### API Endpoint
+
+```
+127.0.0.1:8000/generateanswer/ 
+```
+
+#### Payload
+```
+{
+    "query" : What information is needed to categorize a system
+
+    key must be the string "query"
+    value must be the query 
+}
 ```
 
 ### Storage pipeline

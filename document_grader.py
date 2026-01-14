@@ -1,5 +1,5 @@
 """
-The module comprises of the document grading tool. 
+The module comprises of the document grading tool for the purpose of eliminating irrelevant documents for multi-part or comparison questions. 
 """
 
 import os
