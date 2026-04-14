@@ -9,7 +9,6 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone, PineconeException
 from langchain.messages import SystemMessage, HumanMessage
-from document_grader import document_grading
 import gradio as gr
 from dotenv import load_dotenv, find_dotenv
 
@@ -40,16 +39,16 @@ def retrieve_similar_docs(query: str)-> list:
     try:
         similar_docs_list = []
         vectorstore = PineconeVectorStore(index_name=index_name, embedding=embeddings)
-        similar_docs = vectorstore.similarity_search_with_score(query, k=4)
+        similar_docs = vectorstore.similarity_search_with_score(query, k=1)
 
         if similar_docs == None:
             return "No similar docs."
     
         for doc, score in similar_docs:
             similar_doc = doc.page_content
-            similar_docs_list.append(similar_doc)
-    
-        return similar_docs_list    
+
+        return similar_doc
+       
     except Exception as e:
         return False
 
@@ -72,24 +71,12 @@ def refine_answer(query: str)-> str:
     if(query == ""):
         return gr.update(value="Please provide a question.")
     
-    retrieved_answers = retrieve_similar_docs(query)
-    if(retrieved_answers != "No similar docs." and retrieved_answers != False):
-        answers = ""
-        relevant_docs = document_grading(query, retrieved_answers)
-        if(relevant_docs == "There was an error with the Open AI API. Please try again."):
-            return gr.update(value = "There was an error with the Open AI API. Please try again.")
-        if(relevant_docs == "There is no relevant information available for the given question."):
-            return gr.update(value = "There is no relevant information available for the given question.")
-        if(len(relevant_docs) == 1):
-            question, sep, answer = relevant_docs[0].partition("Answer: ")
-            answers = answer
-        if(len(relevant_docs) > 1):
-            for doc in relevant_docs:
-                question, sep, answer = doc.partition("Answer: ")
-                answers = answers + answer + "\n" + "\n" 
-    if(retrieved_answers == "No similar docs."):
+    retrieved_answer = retrieve_similar_docs(query)
+    if(retrieved_answer != "No similar docs." and retrieved_answer != False):
+        question, sep, answer = retrieved_answer.partition("Answer: ")
+    if(retrieved_answer == "No similar docs."):
         return gr.update(value="There is no available information on the question.")
-    if(retrieved_answers == False):
+    if(retrieved_answer == False):
         return gr.update(value="We are unable to provide an answer at the moment. There was an error in the API.")
 
     try:
@@ -106,7 +93,7 @@ def refine_answer(query: str)-> str:
             content=[
                 {
                 "type": "text",
-                "text":  answers
+                "text":  answer
                 }
             ]
             )
@@ -116,4 +103,3 @@ def refine_answer(query: str)-> str:
         return response.content
     except Exception as e:
         return gr.update(value="We are unable to provide an answer at the moment. There was an error in the API.")
-

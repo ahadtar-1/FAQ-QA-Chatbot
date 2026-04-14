@@ -12,7 +12,6 @@ import pandas as pd
 import langchain
 from doc_tools import parse_doc, extract_questions_answers, store_embeddings
 from retrieval_pipeline import retrieve_similar_docs
-from document_grader import document_grading
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
@@ -50,30 +49,14 @@ def generate_answer_for_query(query: str)-> dict:
     """
     
     
-    retrieved_answers = retrieve_similar_docs(query)
-    if(retrieved_answers != "No similar docs." and retrieved_answers != False):
-        answers = ""
-        relevant_docs = document_grading(query, retrieved_answers)
-        if(relevant_docs == "There was an error with the Open AI API. Please try again."):
-            return {
-            "message": "There was an error with the Open AI API. Please try again."
-            }
-        if(relevant_docs == "There is no relevant information available for the given question."):
-            return {
-            "message": "There is no relevant information available for the given question."
-            }
-        if(len(relevant_docs) == 1):
-            question, sep, answer = relevant_docs[0].partition("Answer: ")
-            answers = answer
-        if(len(relevant_docs) > 1):
-            for doc in relevant_docs:
-                question, sep, answer = doc.partition("Answer: ")
-                answers = answers + answer + "\n" + "\n" 
-    if(retrieved_answers == "No similar docs."):
+    retrieved_answer = retrieve_similar_docs(query)
+    if(retrieved_answer != "No similar docs." and retrieved_answer != False):
+        question, sep, answer = retrieved_answer.partition("Answer: ")
+    if(retrieved_answer == "No similar docs."):
         return {
         "message": "There is no available information on the question."
         }        
-    if(retrieved_answers == False):
+    if(retrieved_answer == False):
         return {
         "message": "We are unable to provide an answer at the moment. There was an error in the Pinecone API"
         }
@@ -92,7 +75,7 @@ def generate_answer_for_query(query: str)-> dict:
             content=[
                 {
                 "type": "text",
-                "text":  answers
+                "text":  answer
                 }
             ]
             )
