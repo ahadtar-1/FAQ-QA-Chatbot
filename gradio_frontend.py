@@ -2,6 +2,7 @@
 The file comprises of the User Interface for the FAQ QA Chatbot.
 """
 
+import os
 import gradio as gr
 from doc_tools import upload_pdf
 from retrieval_pipeline import refine_answer
