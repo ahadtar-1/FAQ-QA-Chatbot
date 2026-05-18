@@ -33,4 +33,4 @@ with gr.Blocks(theme=gr.themes.Glass(primary_hue="slate")) as demo:
           outputs = [qa_output]
         )
 
-demo.launch(share = True)
+demo.launch(server_name="0.0.0.0", server_port=int(os.getenv("PORT", 7860)))
