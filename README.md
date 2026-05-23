@@ -9,11 +9,13 @@ https://faq-qa-chatbot-production.up.railway.app/
 ### Problem Statement
 
 Problem: Context loss in PDFs for RAG Systems
+
 For unstructured data such as PDFs, standard python libraries are unable to successfully parse such data accurately, extract text, maintain reading order, and preserve tables. For Frequently Asked Questions (FAQ) documents standard chunking methods such as token based splitting and recursive character text splitting are not aware of the document structure and are unable to create chunks to preserve context.
 
 ### Solution
 
 Approach: Layout aware parsing and Document Specific Chunking
+
 This project implements layout aware parsing using Upstage AI's document parsing model inorder to preserve PDF data and structure. It also incorporates document specific chunking using a custom-built function inorder to create independent chunks for each question-answer pair to preserve context, avoid mixing context in between questions, and fulfill user requirements by providing desired answers.
 
 ### Set up and Installation
