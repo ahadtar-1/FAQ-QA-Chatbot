@@ -72,6 +72,14 @@ A post request would be sent to the fastpi application. It would comprise of a u
 }
 ```
 
+### Results
+
+| Metric               | Number of Questions                       | Result          |
+|----------------------|-------------------------------------------|-----------------|
+| Retriever Recall @k=1| 219 (73 original + 2 paraphrased versions)| 99.54%          |
+| Generator Accuracy   | 73  (original only)                       | 97.26%          |
+
+
 ### Storage pipeline
 
 Currently both pdf files have been parsed and embedded into the Pinecone Vector Database. To test the storage pipeline for the respective PDFs their record will have to be removed from **pdf_log.csv**, a new index on the Pinecone console will be required to be created, and the index_name variable in the **doc_tools.py** will be required to be changed with the new index name. In the present conditions if the same PDFs are uploaded on the Gradio Interface a message stating "This file has already been uploaded and embedded. Please upload a new file." will appear.
