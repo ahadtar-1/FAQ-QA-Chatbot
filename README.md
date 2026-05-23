@@ -93,13 +93,13 @@ A post request would be sent to the fastpi application. It would comprise of a u
 
 ### Tools and Technologies
 
-Python
-Langchain
-Gradio
-Pinecone
-Upstage AI Document Parser
-OpenAI GPT-4o
-FastAPI 
+* Python
+* Langchain
+* Gradio
+* Pinecone
+* Upstage AI Document Parser
+* OpenAI GPT-4o
+* FastAPI
 
 ### Note
 
