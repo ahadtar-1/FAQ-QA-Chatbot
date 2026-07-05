@@ -389,7 +389,7 @@ def parse_doc(file_path: str)-> bool:
     url = "https://api.upstage.ai/v1/document-digitization"
     headers = {"Authorization": f"Bearer {upstage_api_key}"}
     files = {"document": open(file_path, "rb")}
-    data = {"ocr": "force", "base64_encoding": "['table']", "model": "document-parse", "output_formats": "['html', 'text']"}
+    data = {"ocr": "force", "base64_encoding": "['table']", "model": "document-parse-251217", "output_formats": "['html', 'text']"}
     response = requests.post(url, headers=headers, files=files, data=data)
     if(response.status_code == 200):       
         json_response = response.json()
