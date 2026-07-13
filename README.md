@@ -2,10 +2,6 @@
 
 This project implements an FAQ Retrieval Augmented Generation Chatbot for the purpose of answering FAQ Questions for the documents NIST RMF Categorize Step-FAQs.pdf and ws2012_licensing-pricing_faq.pdf. The application is deployed on Railway and is accessible through the link below.
 
-### Deployment Link
-
-https://faq-qa-chatbot-production.up.railway.app/
-
 ### Problem Statement
 
 Problem: Context loss in PDFs for RAG Systems
