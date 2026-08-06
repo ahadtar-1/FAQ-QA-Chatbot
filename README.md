@@ -40,9 +40,9 @@ pip install -r requirements.txt
  FastAPI Endpoints                Gradio Callbacks
         |                                |
         |________________________________|
-                       |
+                         |
 	          Business Logic              
-                       │
+                         │
               External Services
 
 ```
