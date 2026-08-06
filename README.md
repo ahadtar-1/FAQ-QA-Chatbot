@@ -41,9 +41,9 @@ pip install -r requirements.txt
         |                                |
         |________________________________|
                          |
-	          Business Logic              
+	              Business Logic              
                          │
-              External Services
+                  External Services
 
 ```
 
