@@ -6,6 +6,7 @@ import os
 import pandas as pd
 import json
 import csv
+import re
 import requests
 import shutil
 import base64
@@ -13,18 +14,19 @@ import langchain
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
-from pinecone import Pinecone, PineconeException
+from pinecone import Pinecone
+from pinecone.exceptions import PineconeException, PineconeApiException
+from openai import OpenAIError, APIStatusError
 from langchain.messages import SystemMessage, HumanMessage
-import gradio as gr
 from dotenv import load_dotenv, find_dotenv
 
 _ = load_dotenv(find_dotenv())
 openai_api_key = os.getenv("OPENAI_API_KEY")
 upstage_api_key = os.getenv("UPSTAGE_API_KEY")
 pinecone_api_key = os.getenv("PINECONE_API_KEY")
-index_name = "faqsampleindex"
+index_name = "faqsampleindexjuly2026"
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=openai_api_key)
-llm = ChatOpenAI(model = "gpt-4o", temperature = 0)
+llm = ChatOpenAI(model = "gpt-4.1", temperature = 0)
 df = pd.read_csv("./pdf_log.csv")
 
 
@@ -74,6 +76,29 @@ def second_check_question(text: str)-> bool:
         return True
     else:
         return False
+
+
+def validate_footer(text: str)-> bool:
+    """
+    Validates footer in the document
+
+    Parameters
+    ----------
+    text: str
+        The text to be checked
+
+    Returns
+    -------
+    bool
+        The state of the text
+    
+    """
+
+    
+    pattern = r"^\d+\n\d{4}-\d{1,2}-\d{1,2}\nhttps?://[^\s]+$"
+    if re.match(pattern, text):
+        return True
+    return False
 
 
 def clean_table_of_contents(data: list)-> list:
@@ -214,13 +239,19 @@ def extract_headings_and_tableofcontents(file_path: str)-> dict:
             if(file_elements[index]["category"] == "heading1"):
                 if(file_elements[index]["content"]["text"].replace("\n", " ") in file_contents["table_of_contents"]):
                     break
-                if(file_elements[index]["content"]["text"] in file_contents["headings"] or file_elements[index]["content"]["text"] in file_contents["subheadings"]):
+                if(file_elements[index]["content"]["text"] in file_contents["headings"] or (file_elements[index]["content"]["text"] in file_contents["subheadings"] or file_elements[index]["content"]["text"].upper() in file_contents["subheadings"])):
                     continue
                 if(file_elements[index]["content"]["text"] not in file_contents["headings"] or file_elements[index]["content"]["text"] not in file_contents["subheadings"]):
                     file_contents["headings"].append(file_elements[index]["content"]["text"])
             if(file_elements[index]["category"] == "list" or file_elements[index]["category"] == "index"):
                 table_of_contents = file_elements[index]["content"]["text"].split("\n")
-                refined_table_of_contents = clean_table_of_contents(table_of_contents)
+                new_table_of_contents = []
+                for row in table_of_contents:
+                    if(not row.startswith("Q") and not row[0].isdigit() and "?" not in row):
+                        file_contents["subheadings"].append(clean_subheadings(row))
+                    else:
+                        new_table_of_contents.append(row)        
+                refined_table_of_contents = clean_table_of_contents(new_table_of_contents)
                 for question in refined_table_of_contents:
                     file_contents["table_of_contents"].append(question)
             if(file_elements[index]["category"] == "paragraph"):
@@ -252,7 +283,8 @@ def extract_questions_answers(file_path: str)-> dict:
 
     
     questions_answers = {"questions": [],
-                         "answers": []
+                         "answers": [],
+                         "page_number": []
                         }
     
     questions_started = False
@@ -263,13 +295,16 @@ def extract_questions_answers(file_path: str)-> dict:
         file_parsed_data = json.loads(file.read())
         file_elements = file_parsed_data["elements"]               
         for index, element in enumerate(file_elements):
-            if(element["category"] != "footer" and element["category"] != "figure"):
+            if((element["category"] != "footer" and element["category"] != "figure") and (validate_footer(element["content"]["text"]) == False)):
+                if(element["content"]["text"] == ""):
+                    continue
                 if(element["content"]["text"].replace("\n", " ") in file_contents["table_of_contents"]):
                     questions_started = True
                     if(answer != ""):
                         questions_answers["answers"].append("Answer: "+answer.strip())
                         answer = ""
                     questions_answers["questions"].append(element["content"]["text"].replace("\n", " "))
+                    questions_answers["page_number"].append(element["page"])
                     if(len(questions_answers["questions"]) == len(file_contents["table_of_contents"])):
                         questions_ended = True
                 if(element["content"]["text"].replace("\n", " ") not in file_contents["table_of_contents"] and element["content"]["text"] not in file_contents["headings"]):
@@ -280,6 +315,7 @@ def extract_questions_answers(file_path: str)-> dict:
                             questions_answers["answers"].append("Answer: "+answer.strip())
                             answer = ""
                         questions_answers["questions"].append(element["content"]["text"].replace("\n", " "))
+                        questions_answers["page_number"].append(element["page"])
                         if(len(questions_answers["questions"]) == len(file_contents["table_of_contents"])):
                             questions_ended = True
                         continue
@@ -301,15 +337,57 @@ def extract_questions_answers(file_path: str)-> dict:
                                 return "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."
                             else:
                                 answer = answer + "\n" + table_description + "\n"
+                        elif(element["category"] == "list"):
+                            final_bullet_points = []
+                            index = 0
+                            count_check = 0
+                            bullet_points = element["content"]["text"].split("\n")
+                            number_of_bullet_points = len(bullet_points)
+                            for bullet_point in bullet_points:
+                                if((bullet_point[0].isdigit() and bullet_point[1] == ".") or bullet_point[0] == "·"):
+                                    count_check = count_check + 1
+                            if(count_check == number_of_bullet_points):
+                                for bullet_point in bullet_points:
+                                    answer = answer + bullet_point + "\n"
+                            if(count_check == 0):
+                                for bullet_point in bullet_points:
+                                    answer = answer + bullet_point + "\n"
+                            if(count_check != 0 and count_check != number_of_bullet_points):
+                                for bullet_point in bullet_points:
+                                    if((bullet_point[0].isdigit() and bullet_point[1] == ".") or bullet_point[0] == "·"):
+                                        final_bullet_points.insert(index, bullet_point)
+                                        index = index + 1
+                                    else:
+                                        previous_bullet_point = final_bullet_points[index - 1]
+                                        new_bullet_point = previous_bullet_point + " " + bullet_point
+                                        final_bullet_points[index - 1] = new_bullet_point
+                                for final_bullet_point in final_bullet_points:
+                                    answer = answer + final_bullet_point + "\n"
+                        elif(element["category"] == "footnote"):
+                            continue 
+                        elif("\n" not in element["content"]["text"]): 
+                            presence_check = False 
+                            for heading in file_contents["headings"]:
+                                if("\n" in heading):
+                                    splitted_headings = heading.split("\n")
+                                    for splitted_heading in splitted_headings:
+                                        if(element["content"]["text"] == splitted_heading):
+                                            presence_check = True
+                                else:
+                                    if(element["content"]["text"] == heading):
+                                        presence_check = True
+                            if(presence_check == False):
+                                answer = answer + element["content"]["text"] + "\n"
                         else:
-                            answer = answer + element["content"]["text"].replace("\n", " ") + "\n"
+                            answer = answer + element["content"]["text"].replace('-\n', '-').replace("\n", " ") + "\n"
                 if(questions_ended == True):
                     footer_follows_check = 0
                     if(answer != ""):
                         remaining_file_contents = file_elements[index+1:]
                         for value in remaining_file_contents:
                             if(value["category"] != "footer"):
-                                footer_follows_check = footer_follows_check + 1
+                                if(validate_footer(value["content"]["text"]) == True):
+                                    footer_follows_check = footer_follows_check + 1
                         if(footer_follows_check == 0):
                             questions_answers["answers"].append("Answer: "+answer.strip())
                             answer = "" 
@@ -324,7 +402,7 @@ def extract_questions_answers(file_path: str)-> dict:
     name_of_file = os.path.basename(file_path)
     csv_file_name = name_of_file.replace(".json", ".csv")
     csv_file_path = "./extracted_qa_pairs/" + csv_file_name
-    pd.DataFrame(questions_answers).rename(columns={"questions": "question", "answers": "answer"}).to_csv(csv_file_path, index=False)
+    pd.DataFrame(questions_answers).rename(columns={"questions": "question", "answers": "answer", "page_numbers": "page"}).to_csv(csv_file_path, index=False)
     df = pd.read_csv("./pdf_log.csv")
     df.loc[df["parsed_json_link"] == file_path, "questions_answers_extracted"] = csv_file_path
     df.to_csv("./pdf_log.csv", index=False)
@@ -338,8 +416,11 @@ def store_embeddings(file_path: str, question_answers: dict)-> bool:
 
     Parameters
     ----------
+    file_path: str
+        The fle path
+
     question_answers: dict
-        The question answer pairs
+        The question answer pairs with page numbers
     
     Returns
     -------
@@ -349,24 +430,41 @@ def store_embeddings(file_path: str, question_answers: dict)-> bool:
     """
 
 
+    file_name = os.path.basename(file_path)
     questions = question_answers.get("questions", [])
     answers = question_answers.get("answers", [])
+    page_numbers = question_answers.get("page_number", [])
     qa_list = []
-    for q, a in zip(questions, answers):
+    metadata_list = []
+    for q, a, page in zip(questions, answers, page_numbers):
         pair = f"{q}\n{a}"
         qa_list.append(pair)
+
+        metadata_list.append({"file_name": file_name, "page_number": page})
     
     try:
-        vectorstore = PineconeVectorStore(index_name=index_name, embedding=embeddings)
-        vectorstore.from_texts(texts=qa_list, embedding=embeddings, index_name=index_name)
+        vectorstore = PineconeVectorStore.from_texts(
+            texts=qa_list, 
+            embedding=embeddings, 
+            index_name=index_name,
+            metadatas=metadata_list
+            )
 
         #Recording embeddings for PDF already created to avoid creating embeddings for the same PDF
         df = pd.read_csv("./pdf_log.csv")
         df.loc[df["uploaded_pdf_link"] == file_path, "embeddings_created"] = "created"
         df.to_csv("./pdf_log.csv", index=False)
         return True
+    except APIStatusError as oae:
+        return f"OpenAIAPI-{oae.message}"
+    except OpenAIError as oae:
+        return f"OpenAI-500-{str(oae)}"
+    except PineconeApiException as pae:
+        return f"Pinecone-{str(pae)}"
+    except PineconeException as pe:
+        return f"Pinecone-500-{str(pe)}"
     except Exception as e:
-        return False
+        return f"Connection-{str(e)}"
 
 
 def parse_doc(file_path: str)-> bool:
@@ -389,7 +487,7 @@ def parse_doc(file_path: str)-> bool:
     url = "https://api.upstage.ai/v1/document-digitization"
     headers = {"Authorization": f"Bearer {upstage_api_key}"}
     files = {"document": open(file_path, "rb")}
-    data = {"ocr": "force", "base64_encoding": "['table']", "model": "document-parse-251217", "output_formats": "['html', 'text']"}
+    data = {"ocr": "force", "base64_encoding": "['table']", "model": "document-parse-260128", "output_formats": "['html', 'text', 'markdown']"}
     response = requests.post(url, headers=headers, files=files, data=data)
     if(response.status_code == 200):       
         json_response = response.json()
@@ -425,7 +523,11 @@ def upload_pdf(path: str)-> dict:
     
     
     if path == None:
-        return gr.update(value="No file uploaded.", visible=True)
+        return {
+        "success": False,
+        "status_code": 400,
+        "message": "No file uploaded."
+        }
 
     directory_path_to_save = "./uploaded_pdfdocs"
     json_output_dir = "./json_parsedoutputs"
@@ -442,39 +544,151 @@ def upload_pdf(path: str)-> dict:
         qa_pairs_extracted = df.loc[df["uploaded_pdf_link"] == file_path, "questions_answers_extracted"].squeeze()
     
     if(os.path.exists(file_path) and isinstance(embeddings_created, str)):
-        return gr.update(value="This file has already been uploaded and embedded. Please upload a new file.", visible = True)
+        return {
+        "success": False,
+        "status_code": 409,
+        "message": "This file has already been uploaded and embedded. Please upload a new file."
+        }
     if(os.path.exists(file_path) and pd.isna(json_parsed_link_created)):
         result = parse_doc(file_path)
         if(result == False):
-            return gr.update(value="PDF not successfully processed. The Upstage API is not working.", visible = True)
+            return {
+            "success": False,
+            "status_code": 503,
+            "message": "PDF not successfully processed. The Upstage API is not working."
+            }
         else:
             qa_pairs = extract_questions_answers(json_file_path)
             if(qa_pairs == "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."):
-                return gr.update(value=qa_pairs, visible = True)
+                return {
+                "success": False,
+                "status_code": 503,
+                "message": "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."
+                }
             else:
                 result = store_embeddings(file_path, qa_pairs)
-                if(result == False):
-                    return gr.update(value="There was an error in the Pinecone API. Unable to store PDF.", visible = True)
+                if(isinstance(result, str)):
+                    if "OpenAIAPI" in result:
+                        return {
+                        "success": False,
+                        "status_code": 503,
+                        "message": "We are unable to provide an answer at the moment. There was an error in the OpenAI API."
+                        }
+                    if "OpenAI-500" in result:
+                        return {
+                        "success": False,
+                        "status_code": 503,
+                        "message": "We are unable to provide an answer at the moment. OpenAI Communication issue. Please try again."
+                        }
+                    if "Pinecone" in result:
+                        return {
+                        "success": False,
+                        "status_code": 503,
+                        "message": "We are unable to provide an answer at the moment. There was an error in the Pinecone API."
+                        }
+                    if "Pinecone-500" in result:
+                        return {
+                        "success": False,
+                        "status_code": 503,
+                        "message": "We are unable to provide an answer at the moment. Pinecone communication issue. Please try again."
+                        }
+                    if "Connection" in result:                           
+                        return {
+                        "success": False,
+                        "status_code": 503,
+                        "message": "We are unable to provide an answer at the moment. Connection issue. Please try again."
+                        }
                 else:
-                    return gr.update(value = "PDF successfully stored in Vector Database.", visible = True)
+                    return {
+                    "success": True,
+                    "message": "PDF successfully stored in Vector Database."
+                    }
     if(os.path.exists(file_path) and isinstance(json_parsed_link_created, str) and pd.isna(qa_pairs_extracted)):
         qa_pairs = extract_questions_answers(json_parsed_link_created)
         if(qa_pairs == "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."):
-            return gr.update(value=qa_pairs, visible = True)
+            return {
+            "success": False,
+            "status_code": 503,
+            "message": "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."
+            }
         else:
             result = store_embeddings(file_path, qa_pairs)
-            if(result == False):
-                return gr.update(value="There was an error in the Pinecone API. Unable to store PDF.", visible = True)
+            if(isinstance(result, str)):
+                if "OpenAIAPI" in result:
+                    return {
+                    "success": False,
+                    "status_code": 503,
+                    "message": "We are unable to provide an answer at the moment. There was an error in the OpenAI API."
+                    }
+                if "OpenAI-500" in result:
+                    return {
+                    "success": False,
+                    "status_code": 503,
+                    "message": "We are unable to provide an answer at the moment. OpenAI Communication issue. Please try again."
+                    }
+                if "Pinecone" in result:
+                    return {
+                    "success": False,
+                    "status_code": 503,
+                    "message": "We are unable to provide an answer at the moment. There was an error in the Pinecone API."
+                    }
+                if "Pinecone-500" in result:
+                    return {
+                    "success": False,
+                    "status_code": 503,
+                    "message": "We are unable to provide an answer at the moment. Pinecone communication issue. Please try again."
+                    }
+                if "Connection" in result:
+                    return {
+                    "success": False,
+                    "status_code": 503,
+                    "message": "We are unable to provide an answer at the moment. Connection issue. Please try again."
+                    }
             else:
-                return gr.update(value = "PDF successfully stored in Vector Database.", visible = True)
+                return {
+                "success": True,
+                "message": "PDF successfully stored in Vector Database."
+                }
     if(os.path.exists(file_path) and isinstance(json_parsed_link_created, str) and isinstance(qa_pairs_extracted, str) and pd.isna(embeddings_created)):
         df_qa = pd.read_csv(qa_pairs_extracted)
-        qa_pairs = {"questions": df_qa["question"].tolist(), "answers": df_qa["answer"].tolist()}
+        qa_pairs = {"questions": df_qa["question"].tolist(), "answers": df_qa["answer"].tolist(), "page_number": df_qa["page_number"].tolist()}
         result = store_embeddings(file_path, qa_pairs)
-        if(result == False):
-            return gr.update(value="There was an error in the Pinecone API. Unable to store PDF.", visible = True)
-        else:
-            return gr.update(value = "PDF successfully stored in Vector Database.", visible = True) 
+        if(isinstance(result, str)):
+            if "OpenAIAPI" in result:
+                return {
+                "success": False,
+                "status_code": 503,
+                "message": "We are unable to provide an answer at the moment. There was an error in the OpenAI API."
+                }
+            if "OpenAI-500" in result:
+                return {
+                "success": False,
+                "status_code": 503,
+                "message": "We are unable to provide an answer at the moment. OpenAI Communication issue. Please try again."
+                }
+            if "Pinecone" in result:
+                return {
+                "success": False,
+                "status_code": 503,
+                "message": "We are unable to provide an answer at the moment. There was an error in the Pinecone API."
+                }
+            if "Pinecone-500" in result:
+                return {
+                "success": False,
+                "status_code": 503,
+                "message": "We are unable to provide an answer at the moment. Pinecone communication issue. Please try again."
+                }
+            if "Connection" in result:
+                return {
+                "success": False,
+                "status_code": 503,
+                "message": "We are unable to provide an answer at the moment. Connection issue. Please try again."
+                }
+        else: 
+            return {
+            "success": True,
+            "message": "PDF successfully stored in Vector Database."
+            }
     else:
         shutil.copy(path, file_path)
         new_row = {
@@ -488,15 +702,54 @@ def upload_pdf(path: str)-> dict:
         df_new.to_csv("./pdf_log.csv", mode="a", index=False, header=not os.path.exists("./pdf_log.csv"))
         result = parse_doc(file_path)
         if(result == False):
-            return gr.update(value="PDF not successfully processed. The Upstage API is not working.", visible = True)
+            return {
+            "success": False,
+            "status_code": 503,
+            "message": "PDF not successfully processed. The Upstage API is not working."
+            }
         else:
             qa_pairs = extract_questions_answers(json_file_path)
             if(qa_pairs == "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."):
-                return gr.update(value=qa_pairs, visible = True)
+                return {
+                "success": False,
+                "status_code": 503,
+                "message": "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."
+                }    
             else:
                 result = store_embeddings(file_path, qa_pairs)
-                if(result == False):
-                    return gr.update(value="There was an error in the Pinecone API. Unable to store PDF.", visible = True)
+                if(isinstance(result, str)):
+                    if "OpenAIAPI" in result:
+                        return {
+                        "success": False,
+                        "status_code": 503,
+                        "message": "We are unable to provide an answer at the moment. There was an error in the OpenAI API."
+                        }
+                    if "OpenAI-500" in result:
+                        return {
+                        "success": False,
+                        "status_code": 503,
+                        "message": "We are unable to provide an answer at the moment. OpenAI Communication issue. Please try again."
+                        }
+                    if "Pinecone" in result:
+                        return {
+                        "success": False,
+                        "status_code": 503,
+                        "message": "We are unable to provide an answer at the moment. There was an error in the Pinecone API."
+                        }
+                    if "Pinecone-500" in result:
+                        return {
+                        "success": False,
+                        "status_code": 503,
+                        "message": "We are unable to provide an answer at the moment. Pinecone communication issue. Please try again."
+                        }
+                    if "Connection" in result:                    
+                        return {
+                        "success": False,
+                        "status_code": 503,
+                        "message": "We are unable to provide an answer at the moment. Connection issue. Please try again."
+                        }
                 else:
-                    return gr.update(value = "PDF successfully stored in Vector Database.", visible = True)
-    
+                    return {
+                    "success": True,
+                    "message": "PDF successfully stored in Vector Database."
+                    }

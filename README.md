@@ -16,7 +16,7 @@ This project implements layout aware parsing using Upstage AI's document parsing
 
 ### Set up and Installation
 
-This project can be run in a development enviroment which facilitates Python. For that purpose a conda environment should be created (**python 3.13**) to preserve the packages and dependencies. The requirements file should be executed after the conda environment is created to import the specific dependencies needed to run the project. Once the dependencies are imported then a .env file should be created and an Upstage API Key, Open AI API Key, and Pinecone API Key must be inserted. 
+This project can be run in a development enviroment which facilitates Python. For that purpose a conda environment should be created (**python 3.13**) to preserve the packages and dependencies. The requirements file should be executed after the conda environment is created to import the specific dependencies needed to run the project. Once the dependencies are imported then a .env file should be created and an Upstage API Key, Google AI API Key, Open AI API Key, and Pinecone API Key must be inserted. 
 
 ```bash
 conda create -n faqrag python=3.13
@@ -26,28 +26,51 @@ conda activate faqrag
 pip install -r requirements.txt
 ```
 
-#### Case 1 - Run the application through Gradio
+### Architecture
 
-```bash
-python gradio_frontend.py
+```text
+
+                 Uvicorn (FastAPI)
+                         |
+         ________________|_______________
+        |                                |
+        |                                |
+  REST Client                     Gradio Interface
+        |                                |
+ FastAPI Endpoints                Gradio Callbacks
+        |                                |
+        |________________________________|
+                       |
+	          Business Logic              
+                       │
+                 External Services
+
 ```
 
-#### Case 2 - Run the application through FastAPI
+The application follows a layered architecture built around FastAPI with Gradio mounted into the FastAPI application. This allows Gradio and the RestAPI to be served from a single FastAPI application. The Gradio Interface acts as the presentation layer and front-end. The backend contains two server-side execution layers. The Gradio callback layer handles user interactions through the Gradio Interface while the FastAPI REST API layer exposes endpoints to external clients. Both layers invoke the same underlying business logic.
+
+### Case 1 - Run the application
 
 ```bash
-python routes.py
+python app.py
 ```
 
-## APIs
+### Case 2 - Run the application through external client
 
-### Upload File
+```bash
+python app.py
+```
 
-A post request would be sent to the fastapi application. It would comprise of the FAQ pdf file. The response sent back from the fastapi application would be the status of the file upload.
+#### APIs
+
+#### Upload File
+
+A post request would be sent to the FastAPI application. It would comprise of the FAQ PDF file. The response sent back from the fastapi application would be the status of the file upload.
 
 #### API Endpoint
 
 ```
-127.0.0.1:8000/uploadfile/ 
+0.0.0.0:8000/uploadfile/ 
 ```
 
 #### Payload
@@ -60,14 +83,14 @@ A post request would be sent to the fastapi application. It would comprise of th
 }
 ```
 
-### Generate Answer
+#### Generate Answer
 
-A post request would be sent to the fastpi application. It would comprise of a user query. The response sent back from the fastapi application would be the response to the user's query.
+A post request would be sent to the FastAPI application. It would comprise of a user query. The response sent back from the fastapi application would be the response to the user's query.
 
 #### API Endpoint
 
 ```
-127.0.0.1:8000/generateanswer/ 
+0.0.0.0:8000/generateanswer/ 
 ```
 
 #### Payload
@@ -80,12 +103,32 @@ A post request would be sent to the fastpi application. It would comprise of a u
 }
 ```
 
+### Evaluation
+
+The evaluation for the FAQ-QA-Chatbot is implemented using three evaluation metrics. Retriever Recall, Answer Correctness, and Contextual Recall. Answer Correctness and Contextual Recall are implemented using DeepEval that implement the LLM-as-a-Judge evaluation approach. GPT-5 was used as the LLM for the respective evaluations. The evaluation results can be displayed by executing the following files. The results for the metric Retriever Recall are recorded for each individual question along with two paraphrased versions of the respective question in the file **Vector Database Retrieval Results - Retriever Recall.docx** present in the folder named evaluation.
+
+#### Answer Correctness 
+
+```bash
+cd evaluation
+
+python answer_correctness.py
+```
+#### Contextual Recall 
+
+```bash
+cd evaluation
+
+python contextual_recall.py
+```
+
 ### Results
 
-| Metric               | Number of Questions                       | Result          |
-|----------------------|-------------------------------------------|-----------------|
-| Retriever Recall @k=1| 219 (73 original + 2 paraphrased versions)| 99.54%          |
-| Generator Accuracy   | 73  (original only)                       | 97.26%          |
+| Metric                               | Number of Questions                       | Result          |
+|--------------------------------------|-------------------------------------------|-----------------|
+| Retriever Recall @k=1                | 219 (73 original + 2 paraphrased versions)| 100% / 1.00     |
+| DeepEval G-Eval Answer Correctness   | 73  (original only)                       | 98% / 0.98      |
+| DeepEval Contextual Recall           | 73  (original only)                       | 100% / 1.00     |
 
 ### Tools and Technologies
 
@@ -94,10 +137,14 @@ A post request would be sent to the fastpi application. It would comprise of a u
 * Gradio
 * Pinecone
 * Upstage AI Document Parser
-* OpenAI GPT-4o
-* FastAPI
+* DeepEval (LLM Evals)
+* Google Gemini 3.1 Flash-Lite (Answer Generation)
+* OpenAI GPT-5 (Evaluation)
+* OpenAI GPT-4.1 (Table Summary Generation for tables present in FAQ Questions) 
+* OpenAI text-embedding-3 large
+* FastAPI (API Endpoints, Middleware)
 
 ### Note
 
-Currently both pdf files have been parsed and embedded into the Pinecone Vector Database. To test the storage pipeline for the respective PDFs their record will have to be removed from **pdf_log.csv**, a new index on the Pinecone console will be required to be created, and the index_name variable in the **doc_tools.py** will be required to be changed with the new index name. In the present conditions if the same PDFs are uploaded on the Gradio Interface a message stating "This file has already been uploaded and embedded. Please upload a new file." will appear.
-After opening the gradio interface, at the moment, any FAQ question can be asked of the two specific PDFs and a relevant answer will be generated. The test results for all of the FAQ questions of the two PDFs are recorded in **Final Generated Answers Statistics.docx**. The **Vector Database Retrieval Results - Completed.docx** contains the results of the FAQ pair being retrieved, as context from the Pinecone Vector Database, for each FAQ question along with two paraphrased versions of each question.  
+Currently both pdf files have been parsed and embedded into the Pinecone Vector Database. To test the storage pipeline for the respective PDFs their record will have to be removed from **pdf_log.csv**, a new index on the Pinecone console will be required to be created. In the present conditions if the same PDFs are uploaded a message stating "This file has already been uploaded and embedded. Please upload a new file." will appear.
+After opening the gradio interface, at the moment, any FAQ question can be asked of the two specific PDFs and the relevant answer will be generated. The test results for all of the FAQ questions of the two PDFs are recorded in **final_generated_answers.csv** present in the folder named evaluation.  
