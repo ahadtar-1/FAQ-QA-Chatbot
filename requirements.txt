@@ -8,5 +8,4 @@ langchain-pinecone==0.2.13
 pandas==2.3.2
 fastapi==0.124.2
 python-multipart==0.0.21
-deepeval==4.0.7
 openai==2.43.0
