@@ -2,31 +2,19 @@
 
 This project implements an FAQ Retrieval Augmented Generation Chatbot for the purpose of answering FAQ Questions for the documents NIST RMF Categorize Step-FAQs.pdf and ws2012_licensing-pricing_faq.pdf. The application is deployed on Railway and is accessible through the link below.
 
-### Problem Statement
+## Problem Statement
 
 Problem: Context loss in PDFs for RAG Systems
 
 For unstructured data such as PDFs, standard python libraries are unable to successfully parse such data accurately, extract text, maintain reading order, and preserve tables. For Frequently Asked Questions (FAQ) documents standard chunking methods such as token based splitting and recursive character text splitting are not aware of the document structure and are unable to create chunks to preserve context.
 
-### Solution
+## Solution
 
 Approach: Layout aware parsing and Document Specific Chunking
 
 This project implements layout aware parsing using Upstage AI's document parsing model inorder to preserve PDF data and structure. It also incorporates document specific chunking using a custom-built function inorder to create independent chunks for each question-answer pair to preserve context, avoid mixing context in between questions, and fulfill user requirements by providing desired answers.
 
-### Set up and Installation
-
-This project can be run in a development enviroment which facilitates Python. For that purpose a conda environment should be created (**python 3.13**) to preserve the packages and dependencies. The requirements file should be executed after the conda environment is created to import the specific dependencies needed to run the project. Once the dependencies are imported then a .env file should be created and an Upstage API Key, Google AI API Key, Open AI API Key, and Pinecone API Key must be inserted. 
-
-```bash
-conda create -n faqrag python=3.13
-
-conda activate faqrag
-
-pip install -r requirements.txt
-```
-
-### Architecture
+## Architecture
 
 ```text
 
@@ -49,7 +37,29 @@ pip install -r requirements.txt
 
 The application follows a layered architecture built around FastAPI with Gradio mounted into the FastAPI application. This allows Gradio and the RestAPI to be served from a single FastAPI application. The Gradio Interface acts as the presentation layer and front-end. The backend contains two server-side execution layers. The Gradio callback layer handles user interactions through the Gradio Interface while the FastAPI REST API layer exposes endpoints to external clients. Both layers invoke the same underlying business logic.
 
-### Case 1 - Run the application
+## Run the deployed application
+
+The application has been deployed on Railway and it is accessible through the following link. To run the deployed application no API Keys are required.
+
+Link: https://faq-qa-chatbot-production-6d64.up.railway.app/
+
+## Run the application locally
+
+### Set up and Installation
+
+This project can be run in a development enviroment which facilitates Python. For that purpose a conda environment should be created (**python 3.13**) to preserve the packages and dependencies. The requirements file and requirements-dev file (only necessary for RAG evaluation) should be executed after the conda environment is created to import the specific dependencies needed to run the project. Once the dependencies are imported then a .env file should be created and an Upstage API Key, Google AI API Key, Open AI API Key, and Pinecone API Key must be inserted. 
+
+```bash
+conda create -n faqrag python=3.13
+
+conda activate faqrag
+
+pip install -r requirements.txt
+
+pip install -r requirements-dev.txt
+```
+
+### Case 1 - Run the application in a development environment
 
 ```bash
 python app.py
@@ -105,11 +115,16 @@ A post request would be sent to the FastAPI application. It would comprise of a 
 
 ### Evaluation
 
-The evaluation for the FAQ-QA-Chatbot is implemented using three evaluation metrics. Retriever Recall, Answer Correctness, and Contextual Recall. Answer Correctness and Contextual Recall are implemented using DeepEval that implement the LLM-as-a-Judge evaluation approach. GPT-5 was used as the LLM for the respective evaluations. The evaluation results can be displayed by executing the following files. The results for the metric Retriever Recall are recorded for each individual question along with two paraphrased versions of the respective question in the file **Vector Database Retrieval Results - Retriever Recall.docx** present in the folder named evaluation.
+The evaluation for the FAQ-QA-Chatbot is implemented using three evaluation metrics. Retriever Recall, Answer Correctness, and Contextual Recall. Answer Correctness and Contextual Recall are implemented using DeepEval that implement the LLM-as-a-Judge evaluation approach. GPT-5 was used as the LLM for the respective evaluations. In order to run evaluation locally the file named **requirements-dev.txt** must be executed along with **requirements.txt**. The evaluation results can be displayed by executing the following files. The results for the metric Retriever Recall are recorded for each individual question along with two paraphrased versions of the respective question in the file **Vector Database Retrieval Results - Retriever Recall.docx** present in the folder named evaluation.
 
 #### Answer Correctness 
 
 ```bash
+
+pip install -r requirements.txt
+
+pip install -r requirements-dev.txt
+
 cd evaluation
 
 python answer_correctness.py
@@ -117,6 +132,11 @@ python answer_correctness.py
 #### Contextual Recall 
 
 ```bash
+
+pip install -r requirements.txt
+
+pip install -r requirements-dev.txt
+
 cd evaluation
 
 python contextual_recall.py
