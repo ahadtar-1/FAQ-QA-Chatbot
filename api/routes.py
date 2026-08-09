@@ -8,11 +8,11 @@ from pathlib import Path
 from typing import Annotated
 from fastapi import FastAPI, File, UploadFile
 from fastapi import HTTPException
-from models import QueryRequest, AnswerResponse, UploadResponse
-from middleware import request_logging_middleware
-from retrieval_pipeline import refine_answer
-from doc_tools import upload_pdf
-from gradio_frontend import demo
+from models.models import QueryRequest, AnswerResponse, UploadResponse
+from middleware.middleware import request_logging_middleware
+from services.retrieval_pipeline import refine_answer
+from services.doc_tools import upload_pdf
+from frontend.gradio_frontend import demo
 import shutil
 
 app = FastAPI()

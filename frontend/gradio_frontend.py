@@ -3,10 +3,13 @@ The file comprises of the User Interface for the FAQ QA Chatbot.
 """
 
 import os
+import logging
 import gradio as gr
-from request_context import start_request_context, end_request_context
-from doc_tools import upload_pdf
-from retrieval_pipeline import refine_answer
+from core.request_context import start_request_context, end_request_context
+from services.doc_tools import upload_pdf
+from services.retrieval_pipeline import refine_answer
+
+logger = logging.getLogger("faq-qa-bot")
 
 
 def ask_query(query):
@@ -26,11 +29,16 @@ def ask_query(query):
 def process_pdf(file_path):
 
     
-    if file_path is None:
-        return "No file uploaded."
+    token = start_request_context() #Aug9th
+    try: #Aug9th
+        if file_path is None: #Aug9th
+            logger.warning("No file uploaded")
+            return "No file uploaded." #Aug9th
 
-    result = upload_pdf(file_path)
-    return result["message"]
+        result = upload_pdf(file_path) #Aug9th
+        return result["message"] #Aug9th
+    finally: #Aug9th
+        end_request_context(token) #Aug9th
 
 
 with gr.Blocks(theme=gr.themes.Glass(primary_hue="slate")) as demo:

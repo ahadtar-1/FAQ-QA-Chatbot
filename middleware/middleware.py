@@ -6,7 +6,7 @@ import time
 import uuid
 import logging
 from fastapi import Request, Response
-from request_context import start_request_context, end_request_context, fetch_request_id
+from core.request_context import start_request_context, end_request_context, fetch_request_id
 
 logger = logging.getLogger("faq-qa-bot")
 

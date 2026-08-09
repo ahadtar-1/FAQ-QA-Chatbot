@@ -3,6 +3,8 @@ The module comprises of the tools to upload, parse, and store embeddings of PDFs
 """
 
 import os
+import logging
+import time 
 import pandas as pd
 import json
 import csv
@@ -25,6 +27,7 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 upstage_api_key = os.getenv("UPSTAGE_API_KEY")
 pinecone_api_key = os.getenv("PINECONE_API_KEY")
 index_name = "faqsampleindexjuly2026"
+logger = logging.getLogger("faq-qa-bot")
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=openai_api_key)
 llm = ChatOpenAI(model = "gpt-4.1", temperature = 0)
 df = pd.read_csv("./pdf_log.csv")
@@ -202,10 +205,16 @@ def get_table_description(text: str)-> str:
     ]
     )
 
+    summary_gen_start_time = time.perf_counter() 
+    logger.info("Starting OpenAI summary generation") 
     try:
         response = llm.invoke([message])
+        elapsed_time = time.perf_counter() - summary_gen_start_time 
+        logger.info("Table summary generated successfully | Time = %.3fs", elapsed_time)
         return response.content
     except Exception as e:
+        elapsed_time = time.perf_counter() - summary_gen_start_time 
+        logger.exception("Open AI summary generation failed | Time = %.3fs", elapsed_time) 
         return None
 
 
@@ -442,6 +451,8 @@ def store_embeddings(file_path: str, question_answers: dict)-> bool:
 
         metadata_list.append({"file_name": file_name, "page_number": page})
     
+    embedding_storage_start_time = time.perf_counter()
+    logger.info("Starting Pinecone embedding generation and storage") 
     try:
         vectorstore = PineconeVectorStore.from_texts(
             texts=qa_list, 
@@ -450,20 +461,27 @@ def store_embeddings(file_path: str, question_answers: dict)-> bool:
             metadatas=metadata_list
             )
 
+        elapsed_time = time.perf_counter() - embedding_storage_start_time 
+        logger.info("Pinecone embedding generation and storage completed successfully | Time=%.3fs", elapsed_time)
         #Recording embeddings for PDF already created to avoid creating embeddings for the same PDF
         df = pd.read_csv("./pdf_log.csv")
         df.loc[df["uploaded_pdf_link"] == file_path, "embeddings_created"] = "created"
         df.to_csv("./pdf_log.csv", index=False)
         return True
     except APIStatusError as oae:
+        logger.exception("OpenAI API error during embedding generation") 
         return f"OpenAIAPI-{oae.message}"
     except OpenAIError as oae:
+        logger.exception("OpenAI API communication error") 
         return f"OpenAI-500-{str(oae)}"
     except PineconeApiException as pae:
+        logger.exception("Pinecone API error") 
         return f"Pinecone-{str(pae)}"
     except PineconeException as pe:
+        logger.exception("Pinecone communication error") 
         return f"Pinecone-500-{str(pe)}"
     except Exception as e:
+        logger.exception("Connection error") 
         return f"Connection-{str(e)}"
 
 
@@ -484,11 +502,14 @@ def parse_doc(file_path: str)-> bool:
     """
 
 
+    parsing_start_time = time.perf_counter() 
+    logger.info("Starting Upstage PDF Parsing") 
     url = "https://api.upstage.ai/v1/document-digitization"
     headers = {"Authorization": f"Bearer {upstage_api_key}"}
     files = {"document": open(file_path, "rb")}
     data = {"ocr": "force", "base64_encoding": "['table']", "model": "document-parse-260128", "output_formats": "['html', 'text', 'markdown']"}
     response = requests.post(url, headers=headers, files=files, data=data)
+    elapsed_time = time.perf_counter() - parsing_start_time 
     if(response.status_code == 200):       
         json_response = response.json()
         name_of_file = os.path.basename(file_path)
@@ -500,8 +521,10 @@ def parse_doc(file_path: str)-> bool:
            df = pd.read_csv("./pdf_log.csv")
            df.loc[df["uploaded_pdf_link"] == file_path, "parsed_json_link"] = f"./json_parsedoutputs/{final_name_of_file}.json"
            df.to_csv("./pdf_log.csv", index=False)
+           logger.info("Upstage AI PDF Parsing completed successfully | Time=%.3fs", elapsed_time) 
         return True
     else:
+        logger.error("Upstage AI PDF Parsing failed", response.status_code, elapsed_time)
         return False
 
 
@@ -522,7 +545,10 @@ def upload_pdf(path: str)-> dict:
     """
     
     
+    pdf_processing_start_time = time.perf_counter() 
+    logger.info("Start PDF Processing pipeline") 
     if path == None:
+        logger.warning("No file uploaded") 
         return {
         "success": False,
         "status_code": 400,
@@ -544,6 +570,7 @@ def upload_pdf(path: str)-> dict:
         qa_pairs_extracted = df.loc[df["uploaded_pdf_link"] == file_path, "questions_answers_extracted"].squeeze()
     
     if(os.path.exists(file_path) and isinstance(embeddings_created, str)):
+        logger.warning("File already uploaded and embedded") 
         return {
         "success": False,
         "status_code": 409,
@@ -552,6 +579,7 @@ def upload_pdf(path: str)-> dict:
     if(os.path.exists(file_path) and pd.isna(json_parsed_link_created)):
         result = parse_doc(file_path)
         if(result == False):
+            logger.error("PDF Processing failed during UpstageAI parsing") 
             return {
             "success": False,
             "status_code": 503,
@@ -560,6 +588,7 @@ def upload_pdf(path: str)-> dict:
         else:
             qa_pairs = extract_questions_answers(json_file_path)
             if(qa_pairs == "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."):
+                logger.error("PDF Processing failed due to Open AI API") 
                 return {
                 "success": False,
                 "status_code": 503,
@@ -568,6 +597,7 @@ def upload_pdf(path: str)-> dict:
             else:
                 result = store_embeddings(file_path, qa_pairs)
                 if(isinstance(result, str)):
+                    logger.error("PDF Processing failed during embedding storage") 
                     if "OpenAIAPI" in result:
                         return {
                         "success": False,
@@ -599,6 +629,8 @@ def upload_pdf(path: str)-> dict:
                         "message": "We are unable to provide an answer at the moment. Connection issue. Please try again."
                         }
                 else:
+                    total_time = time.perf_counter() - pdf_processing_start_time 
+                    logger.info("PDF Processing pipeline completed successfully | Total Time=%.3fs", total_time) 
                     return {
                     "success": True,
                     "message": "PDF successfully stored in Vector Database."
@@ -606,6 +638,7 @@ def upload_pdf(path: str)-> dict:
     if(os.path.exists(file_path) and isinstance(json_parsed_link_created, str) and pd.isna(qa_pairs_extracted)):
         qa_pairs = extract_questions_answers(json_parsed_link_created)
         if(qa_pairs == "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."):
+            logger.error("PDF Processing failed due to Open AI API") 
             return {
             "success": False,
             "status_code": 503,
@@ -614,6 +647,7 @@ def upload_pdf(path: str)-> dict:
         else:
             result = store_embeddings(file_path, qa_pairs)
             if(isinstance(result, str)):
+                logger.error("PDF Processing failed due to embeddding storage") 
                 if "OpenAIAPI" in result:
                     return {
                     "success": False,
@@ -645,6 +679,8 @@ def upload_pdf(path: str)-> dict:
                     "message": "We are unable to provide an answer at the moment. Connection issue. Please try again."
                     }
             else:
+                total_time = time.perf_counter() - pdf_processing_start_time
+                logger.info("PDF Processing pipeline completed successfully | Total Time=%.3fs", total_time) 
                 return {
                 "success": True,
                 "message": "PDF successfully stored in Vector Database."
@@ -654,6 +690,7 @@ def upload_pdf(path: str)-> dict:
         qa_pairs = {"questions": df_qa["question"].tolist(), "answers": df_qa["answer"].tolist(), "page_number": df_qa["page_number"].tolist()}
         result = store_embeddings(file_path, qa_pairs)
         if(isinstance(result, str)):
+            logger.error("PDF Processing failed during embedding generation")
             if "OpenAIAPI" in result:
                 return {
                 "success": False,
@@ -684,7 +721,9 @@ def upload_pdf(path: str)-> dict:
                 "status_code": 503,
                 "message": "We are unable to provide an answer at the moment. Connection issue. Please try again."
                 }
-        else: 
+        else:
+            total_time = time.perf_counter() - pdf_processing_start_time 
+            logger.info("PDF Processing pipeline completed successfully | Total Time=%.3fs", total_time)  
             return {
             "success": True,
             "message": "PDF successfully stored in Vector Database."
@@ -702,6 +741,7 @@ def upload_pdf(path: str)-> dict:
         df_new.to_csv("./pdf_log.csv", mode="a", index=False, header=not os.path.exists("./pdf_log.csv"))
         result = parse_doc(file_path)
         if(result == False):
+            logger.error("PDF Processing failed during Upstage AI parsing")
             return {
             "success": False,
             "status_code": 503,
@@ -710,6 +750,7 @@ def upload_pdf(path: str)-> dict:
         else:
             qa_pairs = extract_questions_answers(json_file_path)
             if(qa_pairs == "There was an error in the Open AI API. Unable to extract questions and answers from the PDF."):
+                logger.error("PDF Processing failed due to Open AI API")
                 return {
                 "success": False,
                 "status_code": 503,
@@ -718,6 +759,7 @@ def upload_pdf(path: str)-> dict:
             else:
                 result = store_embeddings(file_path, qa_pairs)
                 if(isinstance(result, str)):
+                    logger.error("PDF Processing failed during embedding storage")
                     if "OpenAIAPI" in result:
                         return {
                         "success": False,
@@ -749,6 +791,8 @@ def upload_pdf(path: str)-> dict:
                         "message": "We are unable to provide an answer at the moment. Connection issue. Please try again."
                         }
                 else:
+                    total_time = time.perf_counter() - pdf_processing_start_time 
+                    logger.info("PDF Processing pipeline completed successfully | Total Time=%.3fs", total_time) 
                     return {
                     "success": True,
                     "message": "PDF successfully stored in Vector Database."

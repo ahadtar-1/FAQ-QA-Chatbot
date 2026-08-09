@@ -3,7 +3,7 @@ The module configures application logging.
 """
 
 import logging
-from request_context import fetch_request_id
+from core.request_context import fetch_request_id
 
 
 class RequestIDFilter(logging.Filter):

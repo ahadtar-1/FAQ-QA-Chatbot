@@ -12,7 +12,7 @@ from deepeval import evaluate
 from deepeval.models import GPTModel
 from deepeval.test_case import LLMTestCase, SingleTurnParams, LLMTestCaseParams
 from deepeval.metrics import ContextualRecallMetric
-from retrieval_pipeline import retrieve_similar_docs 
+from services.retrieval_pipeline import retrieve_similar_docs 
 
 _ = load_dotenv(find_dotenv())
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -30,7 +30,7 @@ def contextual_recall_eval()-> float:
 
     """
 
-
+    
     contextual_recall_metric = ContextualRecallMetric(
     threshold=0.9,
     model="gpt-5",
