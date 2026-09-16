@@ -41,7 +41,7 @@ The application follows a layered architecture built around FastAPI with Gradio 
 
 The application has been deployed on Railway and it is accessible through the following link. To run the deployed application no API Keys are required.
 
-Link: https://faq-qa-chatbot-production-1453.up.railway.app/
+Link: https://faq-qa-chatbot-production-113b.up.railway.app/
 
 ## Run the application locally
 
