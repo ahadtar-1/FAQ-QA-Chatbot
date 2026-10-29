@@ -3,6 +3,7 @@ The module comprises of the retrieval tool and answer refinement tool.
 """
 
 import os
+import re
 import logging 
 import time
 import langchain
@@ -23,6 +24,35 @@ index_name = "faqsampleindexjuly2026"
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=openai_api_key)
 gemini_flash_llm = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite", temperature=1.0, max_retries=2, thinking_level="high", include_thoughts=False, top_p=0.05)
 logger = logging.getLogger("faq-qa-bot")
+
+
+def prompt_injection_detection(query: str)-> bool:
+    """
+    Detect common prompt injection phrases in user-queries
+    
+    Parameters
+    ----------
+    query: str
+        The query sent by the user
+
+    Returns
+    -------
+    bool
+    
+    """
+
+
+    probable_patterns = [
+        r"ignore\s+(all\s+)?previous\s+instructions",
+        r"ignore\s+(all\s+)?prior\s+instructions",
+        r"disregard\s+(all\s+)?previous\s+instructions",
+        r"disregard\s+(all\s+)?prior\s+instructions"
+    ]
+
+    normalized_query = query.lower()
+    return any(re.search(pattern, normalized_query)
+               for pattern in probable_patterns
+    )
 
 
 def retrieve_similar_docs(query: str)-> list:
@@ -102,14 +132,22 @@ def refine_answer(query: str)-> dict:
     
     logger.info("Starting Answer generation")
     answer_generation = time.perf_counter()
-    if(query == ""):
-        logger.warning("Empty query received")
+    if not isinstance(query, str) or not query.strip():
+        logger.warning("Empty/Invalid query received")
         return {
         "success": False,
         "status_code": 400,
         "message": "Please provide a question."
         }
     
+    query = query.strip()
+    if prompt_injection_detection(query):
+        logger.warning("Potential prompt injection detected")
+        return {
+            "success": False,
+            "status_code": 400,
+            "message": "Your question contains instructions that cannot be processed."
+        }
     retrieved_text = retrieve_similar_docs(query)
     if(retrieved_text == "No similar docs."):
         logger.warning("No similar documents found in the Vector DB")

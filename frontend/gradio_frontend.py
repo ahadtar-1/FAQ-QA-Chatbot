@@ -17,6 +17,10 @@ def ask_query(query):
     
     token = start_request_context()
     try:
+        if not isinstance(query, str) or not query.strip():
+            logger.warning("Empty/Invalid query received")
+            return ("Please provide a question.", gr.update(value=""), gr.update(visible=False))
+        query = query.strip()
         result = refine_answer(query)
         if result["success"]:
             return (result["answer"], gr.update(value=result["source"]), gr.update(visible=True))
